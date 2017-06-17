@@ -1,2 +1,4 @@
 # julian-bukkit-plugin
-plugin made for private minecraft server, only made to mess around with code.
+plugin made for private minecraft server
+
+ignore this all, this is nothing special. just messing around in java.
