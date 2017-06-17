@@ -1,0 +1,9 @@
+name: JulianPlugin
+version: 0.0.2
+author: Julian Lee
+main: me.lazward.julianplugin.JulianPlugin
+commands:
+   chatas:
+      description: Message as another person.
+   ticks:
+      description: Return the world's total number of ticks.
