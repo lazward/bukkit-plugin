@@ -7,3 +7,5 @@ commands:
       description: Message as another person.
    ticks:
       description: Return the world's total number of ticks.
+   ci:
+      description: Custom item
