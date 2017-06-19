@@ -136,9 +136,9 @@ public class JulianPlugin extends JavaPlugin implements Listener {
 	
 	public void testForSleepPercent() {
 		
-		float percent = this.playersSleeping.size() / getServer().getOnlinePlayers().size() * 100.0F ;
+		float percent = (float)this.playersSleeping.size() / getServer().getOnlinePlayers().size() * 100.0F ;
 		
-		if (percent >= 50) {
+		if (percent >= 33.3) {
 			
 			Bukkit.broadcastMessage("A majority of the server has went to bed. See you in the morning!") ;
 			
