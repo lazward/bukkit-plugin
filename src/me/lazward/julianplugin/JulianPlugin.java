@@ -1,6 +1,8 @@
 package me.lazward.julianplugin;
 
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 
 import java.util.*;
 import java.util.ArrayList;
@@ -10,16 +12,27 @@ import java.util.UUID;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.Effect;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
+import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.entity.EntityEvent;
+import org.bukkit.event.entity.EntityTargetEvent;
+import org.bukkit.event.entity.EntityTargetLivingEntityEvent;
+import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.event.player.PlayerBedEnterEvent;
 import org.bukkit.event.player.PlayerBedLeaveEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
@@ -39,6 +52,8 @@ public class JulianPlugin extends JavaPlugin implements Listener {
 	Player stopper ;
 	
 	boolean isTimeStopped = false ;
+	
+	HashMap<UUID, Location> entities = new HashMap<UUID, Location>() ;
 
 	public void onEnable() {
 		Bukkit.getPluginManager().registerEvents(this, this);
@@ -307,11 +322,24 @@ public class JulianPlugin extends JavaPlugin implements Listener {
 
 	@EventHandler
 	public void onEntityDamageByEntity(EntityDamageByEntityEvent event) {
+		
 		if ((event.getDamager() instanceof Player) && (event.getEntity() instanceof Player)) {
 
 			Player player = (Player) event.getDamager();
 			Player target = (Player) event.getEntity();
 			World world = (World) getServer().getWorlds().get(0);
+			
+			if (isTimeStopped) {
+				
+				if (!stopper.equals(player)) {
+					
+					event.setCancelled(true);
+					
+					return ;
+					
+				}
+				
+			}
 
 			if (player.getInventory().getItemInMainHand() != null) {
 
@@ -324,9 +352,19 @@ public class JulianPlugin extends JavaPlugin implements Listener {
 						world.strikeLightningEffect(loc);
 
 					}
+					
 				}
 
 			}
+			
+		} else {
+			
+			if (isTimeStopped) {
+				
+				event.setCancelled(true);
+				
+			}
+			
 		}
 	}
 
@@ -375,9 +413,26 @@ public class JulianPlugin extends JavaPlugin implements Listener {
 			howLong = 200L ;
 			
 		}
-		stopper = p ;
-		Bukkit.broadcastMessage("Time has stopped at " + t);
+		
 		isTimeStopped = true ;
+		
+		List<LivingEntity> e = world.getLivingEntities();
+
+		stopper = p ;
+		
+		for (LivingEntity i : e) {
+			
+			if (i.getEntityId() != stopper.getEntityId()) {
+				
+				i.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, (int)howLong, 10)) ;
+				
+			}
+			
+		}
+
+		Bukkit.broadcastMessage("Time has stopped at " + t);
+
+
 		
 		this.getServer().getScheduler().scheduleSyncDelayedTask(this, new Runnable() 
 		{
@@ -385,13 +440,14 @@ public class JulianPlugin extends JavaPlugin implements Listener {
 			public void run() {
 				
 				resumeTime(p) ;
+				world.setTime(t);
+				Bukkit.broadcastMessage("Time has resumed! " + world.getTime()) ;
 				
 			}
 			
 		}, howLong) ;
 		
-		world.setTime(t);
-		Bukkit.broadcastMessage("Time has resumed! " + world.getTime()) ;
+		
 		
 	}
 	
@@ -405,7 +461,7 @@ public class JulianPlugin extends JavaPlugin implements Listener {
 	@EventHandler
 	public void onPlayerMove(PlayerMoveEvent e) {
 		 
-		if (isTimeStopped) { //  && !e.getPlayer().equals(stopper)
+		if (isTimeStopped && !e.getPlayer().equals(stopper)) { //  && !e.getPlayer().equals(stopper)
 			
 			e.setCancelled(true);
 			Location location = e.getFrom() ;
@@ -418,8 +474,57 @@ public class JulianPlugin extends JavaPlugin implements Listener {
 	}
 	
 	@EventHandler
+	public void onBlockBreakEvent(BlockBreakEvent e) {
+		
+		if (isTimeStopped && !e.getPlayer().equals(stopper)) {
+			
+			e.setCancelled(true);
+			
+		}
+		
+	}
+	
+	@EventHandler
+	public void onBlockPlaceEvent(BlockPlaceEvent e) {
+		
+		if (isTimeStopped && !e.getPlayer().equals(stopper)) {
+			
+			e.setCancelled(true);
+			
+		}
+		
+	}
+	
+	@EventHandler
 	public void onInventoryOpenEvent(InventoryOpenEvent e) {
 		
+		if (isTimeStopped && !e.getPlayer().equals(stopper)) {
+			
+			e.setCancelled(true);
+			
+		}
+		
+	}
+	
+	@EventHandler
+	public void onInventoryClickEvent(InventoryClickEvent e) {
+		
+		if (isTimeStopped && !e.getWhoClicked().equals(stopper)) {
+			
+			e.setCancelled(true);
+			
+		}
+		
+	}
+	
+	@EventHandler
+	public void onEntityTargetLivingEntityEvent(EntityTargetLivingEntityEvent e) {
+		
+		if (isTimeStopped && e.getEntity().getEntityId() != stopper.getEntityId()) {
+			
+			e.setCancelled(true);
+			
+		}
 		
 	}
 	
