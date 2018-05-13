@@ -2,6 +2,7 @@ package me.lazward.julianplugin;
 
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.util.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -17,10 +18,14 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.Action;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.player.PlayerBedEnterEvent;
 import org.bukkit.event.player.PlayerBedLeaveEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerKickEvent;
+import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerPickupItemEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.ItemStack;
@@ -29,10 +34,16 @@ import org.bukkit.inventory.meta.ItemMeta;
 public class JulianPlugin extends JavaPlugin implements Listener {
 
 	public ArrayList<UUID> playersSleeping = new ArrayList<UUID>();
+	HashMap<String, CustomWeapon> weaponslist = new HashMap<String, CustomWeapon>() ;
+	//HashMap<String, Player> ts = new HashMap<String, Player>() ;
+	Player stopper ;
+	
+	boolean isTimeStopped = false ;
 
 	public void onEnable() {
 		Bukkit.getPluginManager().registerEvents(this, this);
-		getServer().getLogger().info("Julian's Custom Plugin has been loaded. Hello!");
+		weaponslist.put("kickhammer", new CustomWeapon(ChatColor.GOLD + "The Kickhammer", Arrays.asList("A legendary weapon made for gods.", "Will instantly smite down anyone it hits."), Material.GOLD_AXE, true)) ;
+		getServer().getLogger().info("Julian's Custom Plugin v0.2.0 has been loaded. Hello!");
 	}
 
 	public void onDisable() {
@@ -145,9 +156,9 @@ public class JulianPlugin extends JavaPlugin implements Listener {
 
 						if (this.checkInventorySpace(player)) {
 
-							if (args[0].equals("kickhammer")) {
+							if (weaponslist.containsKey(args[0])) {
 
-								player.getInventory().addItem(kickhammer());
+								player.getInventory().addItem(weaponslist.get(args[0]).getItemStack());
 
 							} else {
 
@@ -266,6 +277,7 @@ public class JulianPlugin extends JavaPlugin implements Listener {
 		return false;
 
 	}
+	/*
 
 	public static ItemStack kickhammer() {
 
@@ -278,6 +290,19 @@ public class JulianPlugin extends JavaPlugin implements Listener {
 
 		return stack;
 
+	}
+	*/
+	
+	public ItemStack getWeapon(String name) {
+		
+		if (weaponslist.containsKey(name)) {
+			
+			return weaponslist.get(name).getItemStack() ;
+			
+		}
+		
+		return null ;
+		
 	}
 
 	@EventHandler
@@ -292,7 +317,7 @@ public class JulianPlugin extends JavaPlugin implements Listener {
 
 				ItemStack helditem = player.getInventory().getItemInMainHand();
 
-				if (helditem.equals(kickhammer())) {
+				if (helditem.equals(getWeapon("kickhammer"))) {
 					if (player.getName().equals("Juelz0312")) {
 						Location loc = target.getLocation();
 						target.kickPlayer("YOU HAVE BEEN SMITTEN.");
@@ -313,7 +338,7 @@ public class JulianPlugin extends JavaPlugin implements Listener {
 		ItemStack item = event.getItem().getItemStack();
 
 		if (!player.getName().equals("Juelz0312")) {
-			if (item.equals(kickhammer())) {
+			if (item.equals(getWeapon("kickhammer"))) {
 				ItemMeta newmeta = item.getItemMeta();
 				newmeta.setUnbreakable(false);
 				newmeta.setLore(Arrays.asList("A legendary weapon whose powers have disappeared.","It is pretty much useless now."));
@@ -322,4 +347,87 @@ public class JulianPlugin extends JavaPlugin implements Listener {
 			}
 		}
 	}
+	
+	@EventHandler
+	public void toggle(PlayerInteractEvent event) {
+		
+		Player player = event.getPlayer() ;
+		
+		if (player.getInventory().getItemInHand().getType().equals(Material.WATCH)) {
+			
+			if (event.getAction().equals(Action.RIGHT_CLICK_AIR) || event.getAction().RIGHT_CLICK_BLOCK == Action.RIGHT_CLICK_BLOCK) {
+				
+				stopTime(player) ;
+				
+			}
+			
+		}
+		
+	}
+	
+	public void stopTime(Player p) {
+		
+		World world = (World) getServer().getWorlds().get(0);
+		final Long t = world.getTime() ;
+		long howLong = 0 ;
+		if (p.getName().equals("Juelz0312")) {
+			
+			howLong = 200L ;
+			
+		}
+		stopper = p ;
+		Bukkit.broadcastMessage("Time has stopped at " + t);
+		isTimeStopped = true ;
+		
+		this.getServer().getScheduler().scheduleSyncDelayedTask(this, new Runnable() 
+		{
+			
+			public void run() {
+				
+				resumeTime(p) ;
+				
+			}
+			
+		}, howLong) ;
+		
+		world.setTime(t);
+		Bukkit.broadcastMessage("Time has resumed! " + world.getTime()) ;
+		
+	}
+	
+	public void resumeTime(Player p) {
+	
+		isTimeStopped = false ;
+		stopper = null ;
+		
+	}
+	
+	@EventHandler
+	public void onPlayerMove(PlayerMoveEvent e) {
+		 
+		if (isTimeStopped) { //  && !e.getPlayer().equals(stopper)
+			
+			e.setCancelled(true);
+			Location location = e.getFrom() ;
+			location.setPitch(e.getTo().getPitch());
+			location.setYaw(e.getTo().getYaw());
+			e.getPlayer().teleport(location) ;
+			
+		}
+		
+	}
+	
+	@EventHandler
+	public void onInventoryOpenEvent(InventoryOpenEvent e) {
+		
+		
+	}
+	
+	@EventHandler
+	public void onPlayerJoin(PlayerJoinEvent e) {
+		
+		e.setJoinMessage(ChatColor.GOLD + "Hello! Congrats on getting through the first year of college. I just wanted to mention that after starting up the server and looking around the world we all built I couldn't help but have a huge grin on my face. I truly missed this place. Let's keep it going. \n(July 27th 2016-August 9th 2017) ~ (May 12th 2018 - ???)");
+		
+	}
+	
 }
