@@ -15,6 +15,7 @@ import org.bukkit.ChatColor;
 import org.bukkit.Effect;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -35,6 +36,7 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.event.player.PlayerBedEnterEvent;
 import org.bukkit.event.player.PlayerBedLeaveEvent;
+import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerKickEvent;
@@ -52,6 +54,8 @@ public class JulianPlugin extends JavaPlugin implements Listener {
 	Player stopper ;
 	
 	boolean isTimeStopped = false ;
+	
+	public int count = 0 ;
 	
 	HashMap<UUID, Location> entities = new HashMap<UUID, Location>() ;
 
@@ -391,7 +395,7 @@ public class JulianPlugin extends JavaPlugin implements Listener {
 		
 		Player player = event.getPlayer() ;
 		
-		if (player.getInventory().getItemInHand().getType().equals(Material.WATCH)) {
+		if (player.getInventory().getItemInHand().getType().equals(Material.WATCH) && !isTimeStopped) {
 			
 			if (event.getAction().equals(Action.RIGHT_CLICK_AIR) || event.getAction().RIGHT_CLICK_BLOCK == Action.RIGHT_CLICK_BLOCK) {
 				
@@ -408,9 +412,11 @@ public class JulianPlugin extends JavaPlugin implements Listener {
 		World world = (World) getServer().getWorlds().get(0);
 		final Long t = world.getTime() ;
 		long howLong = 0 ;
+
 		if (p.getName().equals("Juelz0312")) {
 			
-			howLong = 200L ;
+			howLong = 260L ;
+			count = 10 ;
 			
 		}
 		
@@ -426,35 +432,86 @@ public class JulianPlugin extends JavaPlugin implements Listener {
 				
 				i.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, (int)howLong, 10)) ;
 				
+			} else {
+				
+				i.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, (int)60L, 10)) ;
+				
+			}
+			
+			i.addPotionEffect(new PotionEffect(PotionEffectType.CONFUSION, (int)60L, 10)) ;
+			
+			if (i instanceof Player) {
+				
+				world.playSound(i.getLocation(), Sound.BLOCK_PORTAL_TRIGGER, 10, 1) ;
+				
 			}
 			
 		}
+		
 
 		Bukkit.broadcastMessage("Time has stopped at " + t);
-
-
 		
-		this.getServer().getScheduler().scheduleSyncDelayedTask(this, new Runnable() 
+		this.getServer().getScheduler().scheduleSyncDelayedTask(this, new Runnable()
 		{
 			
 			public void run() {
 				
-				resumeTime(p) ;
-				world.setTime(t);
-				Bukkit.broadcastMessage("Time has resumed! " + world.getTime()) ;
+				Bukkit.broadcastMessage("Begin now") ;
+				countdown(world) ;
 				
 			}
 			
-		}, howLong) ;
+		}, 60L) ; 
 		
-		
+		this.getServer().getScheduler().scheduleSyncDelayedTask(this, new Runnable()
+		{
+			
+			public void run() {
+				
+				resumeTime(p, world, t) ;
+				
+			}
+			
+		}, howLong) ; 
+
 		
 	}
 	
-	public void resumeTime(Player p) {
+	public void resumeTime(Player p, World w, Long t) {
 	
 		isTimeStopped = false ;
 		stopper = null ;
+		w.setTime(t);
+		Bukkit.broadcastMessage("Time has resumed! " + w.getTime()) ;
+		for (Player i : Bukkit.getOnlinePlayers()) {
+			
+			w.playSound(i.getLocation(), Sound.BLOCK_PORTAL_TRAVEL, 10, 1) ;
+			
+		}
+		
+	}
+	
+	public void countdown(World w) {
+		
+		this.getServer().getScheduler().scheduleSyncRepeatingTask(this, new Runnable() 
+		{
+			
+			public void run() {
+				
+				if (count != 0) {
+					
+					for (Player i : Bukkit.getOnlinePlayers()) {
+						
+						w.playSound(i.getLocation(), Sound.BLOCK_LEVER_CLICK, 10, 1) ;
+						count-- ;
+						
+					}
+					
+				}
+				
+			}
+			
+		}, 0L, 20L) ;
 		
 	}
 	
@@ -519,6 +576,28 @@ public class JulianPlugin extends JavaPlugin implements Listener {
 	
 	@EventHandler
 	public void onEntityTargetLivingEntityEvent(EntityTargetLivingEntityEvent e) {
+		
+		if (isTimeStopped && e.getEntity().getEntityId() != stopper.getEntityId()) {
+			
+			e.setCancelled(true);
+			
+		}
+		
+	}
+	
+	@EventHandler
+	public void onPlayerDropItem(PlayerDropItemEvent e) {
+		
+		if (isTimeStopped && !e.getPlayer().equals(stopper)) {
+			
+			e.setCancelled(true);
+			
+		} 
+		
+	}
+	
+	@EventHandler
+	public void onEntityTargetEvent(EntityTargetEvent e) {
 		
 		if (isTimeStopped && e.getEntity().getEntityId() != stopper.getEntityId()) {
 			
