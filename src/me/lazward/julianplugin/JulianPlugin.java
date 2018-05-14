@@ -412,7 +412,7 @@ public class JulianPlugin extends JavaPlugin implements Listener {
 	public void stopTime(Player p) {
 		
 		World world = (World) getServer().getWorlds().get(0);
-		final Long t = world.getTime() ;
+		final Long t = world.getFullTime();
 		long howLong = 0 ;
 		
 		switch (p.getName()) {
@@ -496,7 +496,7 @@ public class JulianPlugin extends JavaPlugin implements Listener {
 
 		isTimeStopped = false ;
 		stopper = null ;
-		w.setTime(t);
+		w.setFullTime(t);
 		Bukkit.broadcastMessage("Time has resumed! " + w.getTime()) ;
 		for (Player i : Bukkit.getOnlinePlayers()) {
 			
