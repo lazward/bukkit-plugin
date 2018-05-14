@@ -12,14 +12,12 @@ import java.util.UUID;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
-import org.bukkit.Effect;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -28,8 +26,6 @@ import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
-import org.bukkit.event.entity.EntityDamageEvent;
-import org.bukkit.event.entity.EntityEvent;
 import org.bukkit.event.entity.EntityTargetEvent;
 import org.bukkit.event.entity.EntityTargetLivingEntityEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
@@ -58,10 +54,14 @@ public class JulianPlugin extends JavaPlugin implements Listener {
 	public int count = 0 ;
 	
 	HashMap<UUID, Location> entities = new HashMap<UUID, Location>() ;
+	
+	int cd ;
 
 	public void onEnable() {
 		Bukkit.getPluginManager().registerEvents(this, this);
 		weaponslist.put("kickhammer", new CustomWeapon(ChatColor.GOLD + "The Kickhammer", Arrays.asList("A legendary weapon made for gods.", "Will instantly smite down anyone it hits."), Material.GOLD_AXE, true)) ;
+		weaponslist.put("world", new CustomWeapon(ChatColor.GOLD + "The World", Arrays.asList("Gives you the ability to stop time for ten seconds."), Material.WATCH, true)) ;
+		weaponslist.put("sworld", new CustomWeapon(ChatColor.GOLD + "Star Platinum: The World", Arrays.asList("Stop time for five seconds."), Material.WATCH, true)) ;
 		getServer().getLogger().info("Julian's Custom Plugin v0.2.0 has been loaded. Hello!");
 	}
 
@@ -395,7 +395,9 @@ public class JulianPlugin extends JavaPlugin implements Listener {
 		
 		Player player = event.getPlayer() ;
 		
-		if (player.getInventory().getItemInHand().getType().equals(Material.WATCH) && !isTimeStopped) {
+		ItemStack inHand = player.getInventory().getItemInHand() ;
+		
+		if ((inHand.equals(weaponslist.get("world").getItemStack()) || inHand.equals(weaponslist.get("sworld").getItemStack())) && !isTimeStopped) {
 			
 			if (event.getAction().equals(Action.RIGHT_CLICK_AIR) || event.getAction().RIGHT_CLICK_BLOCK == Action.RIGHT_CLICK_BLOCK) {
 				
@@ -412,12 +414,18 @@ public class JulianPlugin extends JavaPlugin implements Listener {
 		World world = (World) getServer().getWorlds().get(0);
 		final Long t = world.getTime() ;
 		long howLong = 0 ;
-
-		if (p.getName().equals("Juelz0312")) {
-			
+		
+		switch (p.getName()) {
+		
+		case "Juelz0312":
+			howLong = 160L ;
+			count = 5 ;
+			break ;
+		case "Pankauski":
 			howLong = 260L ;
 			count = 10 ;
-			
+			break ;
+		
 		}
 		
 		isTimeStopped = true ;
@@ -451,7 +459,11 @@ public class JulianPlugin extends JavaPlugin implements Listener {
 
 		Bukkit.broadcastMessage("Time has stopped at " + t);
 		
-		this.getServer().getScheduler().scheduleSyncDelayedTask(this, new Runnable()
+		JulianPlugin plugin = this ;
+		
+		plugin.getServer().getScheduler().cancelAllTasks();
+		
+		cd = this.getServer().getScheduler().scheduleSyncDelayedTask(this, new Runnable()
 		{
 			
 			public void run() {
@@ -473,12 +485,15 @@ public class JulianPlugin extends JavaPlugin implements Listener {
 			}
 			
 		}, howLong) ; 
+		
+
 
 		
 	}
 	
 	public void resumeTime(Player p, World w, Long t) {
 	
+
 		isTimeStopped = false ;
 		stopper = null ;
 		w.setTime(t);
@@ -503,9 +518,14 @@ public class JulianPlugin extends JavaPlugin implements Listener {
 					for (Player i : Bukkit.getOnlinePlayers()) {
 						
 						w.playSound(i.getLocation(), Sound.BLOCK_LEVER_CLICK, 10, 1) ;
-						count-- ;
+						
+						
 						
 					}
+					
+					Bukkit.broadcastMessage(count + " seconds left!") ;
+					
+					count-- ;
 					
 				}
 				
