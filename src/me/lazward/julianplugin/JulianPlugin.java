@@ -466,8 +466,7 @@ public class JulianPlugin extends JavaPlugin implements Listener {
 
 		}
 
-		Bukkit.broadcastMessage("Time has stopped at " + t);
-		log(p.getName() + "has stopped time at " + t);
+		Bukkit.broadcastMessage(p.getName() + "has stopped time at " + t);
 
 		JulianPlugin plugin = this;
 
@@ -502,7 +501,6 @@ public class JulianPlugin extends JavaPlugin implements Listener {
 
 		w.setFullTime(t);
 		Bukkit.broadcastMessage("Time has resumed! " + w.getFullTime());
-		log("Time has resumed! " + w.getFullTime());
 		for (Player i : Bukkit.getOnlinePlayers()) {
 
 			w.playSound(i.getLocation(), Sound.BLOCK_PORTAL_TRAVEL, 10, 1);
