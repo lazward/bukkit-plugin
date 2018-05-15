@@ -25,9 +25,12 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.entity.EntityAirChangeEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityTargetEvent;
 import org.bukkit.event.entity.EntityTargetLivingEntityEvent;
+import org.bukkit.event.entity.ProjectileLaunchEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.event.player.PlayerBedEnterEvent;
@@ -39,34 +42,43 @@ import org.bukkit.event.player.PlayerKickEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerPickupItemEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.player.PlayerToggleSneakEvent;
+import org.bukkit.event.player.PlayerToggleSprintEvent;
+import org.bukkit.event.player.PlayerVelocityEvent;
+import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.util.Vector;
 
 public class JulianPlugin extends JavaPlugin implements Listener {
 
 	public ArrayList<UUID> playersSleeping = new ArrayList<UUID>();
-	HashMap<String, CustomWeapon> weaponslist = new HashMap<String, CustomWeapon>() ;
-	//HashMap<String, Player> ts = new HashMap<String, Player>() ;
-	Player stopper ;
-	
-	boolean isTimeStopped = false ;
-	
-	public int count = 0 ;
-	
-	HashMap<UUID, Location> entities = new HashMap<UUID, Location>() ;
-	
-	int cd ;
+	HashMap<String, CustomWeapon> weaponslist = new HashMap<String, CustomWeapon>();
+	// HashMap<String, Player> ts = new HashMap<String, Player>() ;
+	Player stopper;
+
+	boolean isTimeStopped = false;
+
+	public int count = 0;
+
+	HashMap<UUID, Location> entities = new HashMap<UUID, Location>();
+
+	int cd;
+
+	HashMap<UUID, Vector> velocities = new HashMap<UUID, Vector>();
 
 	public void onEnable() {
 		Bukkit.getPluginManager().registerEvents(this, this);
-		weaponslist.put("kickhammer", new CustomWeapon(ChatColor.GOLD + "The Kickhammer", Arrays.asList("A legendary weapon made for gods.", "Will instantly smite down anyone it hits."), Material.GOLD_AXE, true)) ;
-		weaponslist.put("world", new CustomWeapon(ChatColor.GOLD + "The World", Arrays.asList("Gives you the ability to stop time for ten seconds."), Material.WATCH, true)) ;
-		weaponslist.put("sworld", new CustomWeapon(ChatColor.GOLD + "Star Platinum: The World", Arrays.asList("Stop time for five seconds."), Material.WATCH, true)) ;
-		getServer().getLogger().info("Julian's Custom Plugin v0.2.0 has been loaded. Hello!");
+		weaponslist.put("kickhammer", new CustomWeapon(ChatColor.GOLD + "The Kickhammer", Arrays.asList("A legendary weapon made for gods.", "Will instantly smite down anyone it hits."), Material.GOLD_AXE, true));
+		weaponslist.put("world", new CustomWeapon(ChatColor.GOLD + "The World", Arrays.asList("Gives you the ability to stop time for ten seconds."), Material.WATCH, true));
+		weaponslist.put("sworld", new CustomWeapon(ChatColor.GOLD + "Star Platinum: The World", Arrays.asList("Stop time for five seconds."), Material.WATCH, true));
+		getServer().getLogger().info("Julian's Custom Plugin v0.2.1 has been loaded. Hello!");
 	}
 
 	public void onDisable() {
+		
 		getServer().getLogger().info("Zzz... Julian's Custom Plugin has been unloaded.");
+		
 	}
 
 	public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
@@ -169,7 +181,7 @@ public class JulianPlugin extends JavaPlugin implements Listener {
 
 					if (args.length == 0) {
 
-						sender.sendMessage("/ci <item name>");
+						openGUI(player) ;
 
 					} else if (args.length >= 1) {
 
@@ -296,54 +308,34 @@ public class JulianPlugin extends JavaPlugin implements Listener {
 		return false;
 
 	}
-	/*
 
-	public static ItemStack kickhammer() {
-
-		ItemStack stack = new ItemStack(Material.GOLD_AXE, 1);
-		ItemMeta im = stack.getItemMeta();
-		im.setDisplayName(ChatColor.GOLD + "The Kickhammer");
-		im.setLore(Arrays.asList("A legendary weapon made for gods.", "Will instantly smite down anyone it hits."));
-		im.setUnbreakable(true);
-		stack.setItemMeta(im);
-
-		return stack;
-
-	}
-	*/
-	
 	public ItemStack getWeapon(String name) {
-		
+
 		if (weaponslist.containsKey(name)) {
-			
-			return weaponslist.get(name).getItemStack() ;
-			
+
+			return weaponslist.get(name).getItemStack();
+
 		}
-		
-		return null ;
-		
+
+		return null;
+
 	}
 
 	@EventHandler
 	public void onEntityDamageByEntity(EntityDamageByEntityEvent event) {
-		
+
+		if (isTimeStopped && event.getDamager().getEntityId() != stopper.getEntityId()) {
+
+			event.setCancelled(true);
+			return;
+
+		}
+
 		if ((event.getDamager() instanceof Player) && (event.getEntity() instanceof Player)) {
 
 			Player player = (Player) event.getDamager();
 			Player target = (Player) event.getEntity();
 			World world = (World) getServer().getWorlds().get(0);
-			
-			if (isTimeStopped) {
-				
-				if (!stopper.equals(player)) {
-					
-					event.setCancelled(true);
-					
-					return ;
-					
-				}
-				
-			}
 
 			if (player.getInventory().getItemInMainHand() != null) {
 
@@ -354,22 +346,29 @@ public class JulianPlugin extends JavaPlugin implements Listener {
 						Location loc = target.getLocation();
 						target.kickPlayer("YOU HAVE BEEN SMITTEN.");
 						world.strikeLightningEffect(loc);
+						return;
 
 					}
-					
+
 				}
 
 			}
-			
-		} else {
-			
+
 			if (isTimeStopped) {
-				
-				event.setCancelled(true);
-				
+
+				Vector v = velocities.get(target.getUniqueId());
+			    Vector t = target.getLocation().toVector().clone();
+			    Vector p = player.getLocation().toVector().clone();
+			    
+			    Vector direction = t.subtract(p).normalize();
+			    
+			    v.add(direction) ;
+			    velocities.put(target.getUniqueId(), v) ;
+
 			}
-			
+
 		}
+
 	}
 
 	@EventHandler
@@ -383,255 +382,377 @@ public class JulianPlugin extends JavaPlugin implements Listener {
 			if (item.equals(getWeapon("kickhammer"))) {
 				ItemMeta newmeta = item.getItemMeta();
 				newmeta.setUnbreakable(false);
-				newmeta.setLore(Arrays.asList("A legendary weapon whose powers have disappeared.","It is pretty much useless now."));
+				newmeta.setLore(Arrays.asList("A legendary weapon whose powers have disappeared.",
+						"It is pretty much useless now."));
 				item.setItemMeta(newmeta);
 				item.setDurability((short) 32);
 			}
 		}
 	}
-	
+
 	@EventHandler
 	public void toggle(PlayerInteractEvent event) {
-		
-		Player player = event.getPlayer() ;
-		
-		ItemStack inHand = player.getInventory().getItemInHand() ;
-		
-		if ((inHand.equals(weaponslist.get("world").getItemStack()) || inHand.equals(weaponslist.get("sworld").getItemStack())) && !isTimeStopped) {
-			
-			if (event.getAction().equals(Action.RIGHT_CLICK_AIR) || event.getAction().RIGHT_CLICK_BLOCK == Action.RIGHT_CLICK_BLOCK) {
-				
-				stopTime(player) ;
-				
+
+		Player player = event.getPlayer();
+
+		ItemStack inHand = player.getInventory().getItemInHand();
+
+		if ((inHand.equals(weaponslist.get("world").getItemStack())
+				|| inHand.equals(weaponslist.get("sworld").getItemStack())) && !isTimeStopped) {
+
+			if (event.getAction().equals(Action.RIGHT_CLICK_AIR)
+					|| event.getAction().RIGHT_CLICK_BLOCK == Action.RIGHT_CLICK_BLOCK) {
+
+				stopTime(player, inHand);
+
 			}
-			
+
 		}
-		
+
 	}
-	
-	public void stopTime(Player p) {
-		
+
+	public void stopTime(Player p, ItemStack h) {
+
 		World world = (World) getServer().getWorlds().get(0);
 		final Long t = world.getFullTime();
-		long howLong = 0 ;
+		long howLong = 0;
 		
-		switch (p.getName()) {
-		
-		case "Juelz0312":
-			howLong = 160L ;
-			count = 5 ;
-			break ;
-		case "Pankauski":
-			howLong = 260L ;
-			count = 10 ;
-			break ;
-		
+		if (h.equals(weaponslist.get("sworld").getItemStack())) {
+			
+			howLong = 160L;
+			count = 5;
+			
+		} else {
+			
+			howLong = 260L;
+			count = 10;
 		}
-		
-		isTimeStopped = true ;
-		
+
+		for (Player j : Bukkit.getOnlinePlayers()) {
+
+			velocities.put(j.getUniqueId(), j.getVelocity());
+
+		}
+
+		for (LivingEntity k : world.getLivingEntities()) {
+
+			velocities.put(k.getUniqueId(), k.getVelocity());
+
+		}
+
+		isTimeStopped = true;
+
 		List<LivingEntity> e = world.getLivingEntities();
 
-		stopper = p ;
-		
 		for (LivingEntity i : e) {
-			
-			if (i.getEntityId() != stopper.getEntityId()) {
-				
-				i.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, (int)howLong, 10)) ;
-				
-			} else {
-				
-				i.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, (int)60L, 10)) ;
-				
-			}
-			
-			i.addPotionEffect(new PotionEffect(PotionEffectType.CONFUSION, (int)60L, 10)) ;
-			
+
 			if (i instanceof Player) {
-				
-				world.playSound(i.getLocation(), Sound.BLOCK_PORTAL_TRIGGER, 10, 1) ;
-				
+
+				i.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, (int) 60L, 10));
+
+			} else {
+
+				i.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, (int) howLong, 10));
+
 			}
-			
+
+			i.addPotionEffect(new PotionEffect(PotionEffectType.CONFUSION, (int) 60L, 10));
+
+			if (i instanceof Player) {
+
+				world.playSound(i.getLocation(), Sound.BLOCK_PORTAL_TRIGGER, 10, 1);
+
+			}
+
 		}
-		
 
 		Bukkit.broadcastMessage("Time has stopped at " + t);
-		
-		JulianPlugin plugin = this ;
-		
+		log(p.getName() + "has stopped time at " + t);
+
+		JulianPlugin plugin = this;
+
 		plugin.getServer().getScheduler().cancelAllTasks();
-		
-		cd = this.getServer().getScheduler().scheduleSyncDelayedTask(this, new Runnable()
-		{
-			
-			public void run() {
-				
-				Bukkit.broadcastMessage("Begin now") ;
-				countdown(world) ;
-				
-			}
-			
-		}, 60L) ; 
-		
-		this.getServer().getScheduler().scheduleSyncDelayedTask(this, new Runnable()
-		{
-			
-			public void run() {
-				
-				resumeTime(p, world, t) ;
-				
-			}
-			
-		}, howLong) ; 
-		
 
+		cd = this.getServer().getScheduler().scheduleSyncDelayedTask(this, new Runnable() {
 
-		
+			public void run() {
+
+				stopper = p;
+				countdown(world);
+
+			}
+
+		}, 60L);
+
+		this.getServer().getScheduler().scheduleSyncDelayedTask(this, new Runnable() {
+
+			public void run() {
+
+				resumeTime(world, t);
+
+			}
+
+		}, howLong);
+
 	}
-	
-	public void resumeTime(Player p, World w, Long t) {
-	
 
-		isTimeStopped = false ;
-		stopper = null ;
+	public void resumeTime(World w, Long t) {
+
+		isTimeStopped = false;
+
 		w.setFullTime(t);
-		Bukkit.broadcastMessage("Time has resumed! " + w.getTime()) ;
+		Bukkit.broadcastMessage("Time has resumed! " + w.getFullTime());
+		log("Time has resumed! " + w.getFullTime());
 		for (Player i : Bukkit.getOnlinePlayers()) {
-			
-			w.playSound(i.getLocation(), Sound.BLOCK_PORTAL_TRAVEL, 10, 1) ;
-			
-		}
-		
-	}
-	
-	public void countdown(World w) {
-		
-		this.getServer().getScheduler().scheduleSyncRepeatingTask(this, new Runnable() 
-		{
-			
-			public void run() {
-				
-				if (count != 0) {
-					
-					for (Player i : Bukkit.getOnlinePlayers()) {
-						
-						w.playSound(i.getLocation(), Sound.BLOCK_LEVER_CLICK, 10, 1) ;
-						
-						
-						
-					}
-					
-					Bukkit.broadcastMessage(count + " seconds left!") ;
-					
-					count-- ;
-					
-				}
-				
+
+			w.playSound(i.getLocation(), Sound.BLOCK_PORTAL_TRAVEL, 10, 1);
+
+			if (!i.getName().equals(stopper.getName())) {
+
+				i.setVelocity(velocities.get(i.getUniqueId()));
+
 			}
-			
-		}, 0L, 20L) ;
-		
+
+		}
+
+		stopper = null;
+
 	}
-	
+
+	public void countdown(World w) {
+
+		this.getServer().getScheduler().scheduleSyncRepeatingTask(this, new Runnable() {
+
+			public void run() {
+
+				if (count != 0) {
+
+					for (Player i : Bukkit.getOnlinePlayers()) {
+
+						w.playSound(i.getLocation(), Sound.BLOCK_LEVER_CLICK, 10, 1);
+
+					}
+
+					Bukkit.broadcastMessage(count + " seconds left!");
+
+					count--;
+
+				}
+
+			}
+
+		}, 0L, 20L);
+
+	}
+
 	@EventHandler
 	public void onPlayerMove(PlayerMoveEvent e) {
-		 
-		if (isTimeStopped && !e.getPlayer().equals(stopper)) { //  && !e.getPlayer().equals(stopper)
-			
+
+		if (isTimeStopped && !e.getPlayer().equals(stopper)) { // && !e.getPlayer().equals(stopper)
+
 			e.setCancelled(true);
-			Location location = e.getFrom() ;
+			Location location = e.getFrom();
 			location.setPitch(e.getTo().getPitch());
 			location.setYaw(e.getTo().getYaw());
-			e.getPlayer().teleport(location) ;
-			
+			e.getPlayer().teleport(location);
+
 		}
-		
+
 	}
-	
+
 	@EventHandler
 	public void onBlockBreakEvent(BlockBreakEvent e) {
-		
+
 		if (isTimeStopped && !e.getPlayer().equals(stopper)) {
-			
+
 			e.setCancelled(true);
-			
+
 		}
-		
+
 	}
-	
+
 	@EventHandler
 	public void onBlockPlaceEvent(BlockPlaceEvent e) {
-		
+
 		if (isTimeStopped && !e.getPlayer().equals(stopper)) {
-			
+
 			e.setCancelled(true);
-			
+
 		}
-		
+
 	}
-	
+
 	@EventHandler
 	public void onInventoryOpenEvent(InventoryOpenEvent e) {
-		
+
 		if (isTimeStopped && !e.getPlayer().equals(stopper)) {
-			
+
 			e.setCancelled(true);
-			
+
 		}
-		
+
 	}
-	
+
 	@EventHandler
 	public void onInventoryClickEvent(InventoryClickEvent e) {
-		
+
 		if (isTimeStopped && !e.getWhoClicked().equals(stopper)) {
-			
+
 			e.setCancelled(true);
-			
+
 		}
 		
+		if(ChatColor.stripColor(e.getInventory().getName()).equalsIgnoreCase("Legendary Weapons")) {
+			
+			Player p = (Player) e.getWhoClicked() ;
+			e.setCancelled(true);
+			
+			if (e.getCurrentItem() == null || e.getCurrentItem().getType().equals(Material.AIR) || !e.getCurrentItem().hasItemMeta()) {
+				
+				return ;
+				
+			}
+			
+			p.getInventory().addItem(e.getCurrentItem());
+			p.closeInventory();
+			
+		}
+
 	}
-	
+
 	@EventHandler
 	public void onEntityTargetLivingEntityEvent(EntityTargetLivingEntityEvent e) {
-		
-		if (isTimeStopped && e.getEntity().getEntityId() != stopper.getEntityId()) {
-			
+
+		if (isTimeStopped && e.getEntity().getEntityId() == stopper.getEntityId()) {
+
 			e.setCancelled(true);
-			
+
 		}
-		
+
 	}
-	
+
 	@EventHandler
 	public void onPlayerDropItem(PlayerDropItemEvent e) {
-		
+
 		if (isTimeStopped && !e.getPlayer().equals(stopper)) {
-			
+
 			e.setCancelled(true);
-			
-		} 
-		
+
+		}
+
+	}
+
+	@EventHandler
+	public void onEntityTargetEvent(EntityTargetEvent e) {
+
+		if (isTimeStopped && e.getEntity().getEntityId() == stopper.getEntityId()) {
+
+			e.setCancelled(true);
+
+		}
+
+	}
+
+	@EventHandler
+	public void onPlayerToggleSneakEvent(PlayerToggleSneakEvent e) {
+
+		if (isTimeStopped && !e.getPlayer().equals(stopper)) {
+
+			e.setCancelled(true);
+
+		}
+
+	}
+
+	@EventHandler
+	public void onPlayerToggleSprintEvent(PlayerToggleSprintEvent e) {
+
+		if (isTimeStopped && !e.getPlayer().equals(stopper)) {
+
+			e.setCancelled(true);
+
+		}
+
+	}
+
+	@EventHandler
+	public void onPlayerVelocityEvent(PlayerVelocityEvent e) {
+
+		Player p = e.getPlayer();
+		EntityDamageEvent last = p.getLastDamageCause();
+
+		if (last == null || !(last instanceof EntityDamageByEntityEvent)) {
+
+			return;
+
+		}
+
+		if (isTimeStopped && ((EntityDamageByEntityEvent) last).getDamager().getEntityId() == stopper.getEntityId()) {
+
+			Vector v = velocities.get(p.getUniqueId());
+			v = v.add(e.getVelocity());
+			velocities.put(p.getUniqueId(), v);
+
+		}
+
+	}
+
+	@EventHandler
+	public void onProjectileLaunchEvent(ProjectileLaunchEvent e) {
+
+		if (isTimeStopped) {
+
+			if (!e.getEntity().getShooter().equals(stopper)) {
+
+				e.setCancelled(true);
+
+			}
+
+		}
+
 	}
 	
 	@EventHandler
-	public void onEntityTargetEvent(EntityTargetEvent e) {
+	public void onEntityAirChangeEvent(EntityAirChangeEvent e) {
 		
-		if (isTimeStopped && e.getEntity().getEntityId() != stopper.getEntityId()) {
+		if (isTimeStopped && !e.getEntity().equals(stopper)) {
 			
 			e.setCancelled(true);
 			
 		}
 		
 	}
-	
+
 	@EventHandler
 	public void onPlayerJoin(PlayerJoinEvent e) {
-		
-		e.setJoinMessage(ChatColor.GOLD + "Hello! Congrats on getting through the first year of college. I just wanted to mention that after starting up the server and looking around the world we all built I couldn't help but have a huge grin on my face. I truly missed this place. Let's keep it going. \n(July 27th 2016-August 9th 2017) ~ (May 12th 2018 - ???)");
-		
+
+		e.getPlayer().sendMessage(ChatColor.GOLD
+				+ "Hello! Congrats on getting through the first year of college. I just wanted to mention that after starting up the server and looking around the world we all built I couldn't help but have a huge grin on my face. I truly missed this place. Let's keep it going. \n(July 27th 2016-August 9th 2017) ~ (May 12th 2018 - ???)");
+
+	}
+
+	@EventHandler
+	public void log(String x) {
+
+		Bukkit.getConsoleSender().sendMessage(x);
+
 	}
 	
+	@EventHandler
+    public void openGUI(Player p) {
+		
+		Inventory inv = Bukkit.createInventory(null, 9, ChatColor.GOLD + "Legendary Weapons") ;
+		
+		int i = 0 ;
+		for (String j : weaponslist.keySet()) {
+			
+			inv.setItem(i, weaponslist.get(j).getItemStack()) ;
+			i++ ;
+			
+		}
+		
+		p.openInventory(inv) ;
+		
+	}
+
 }
