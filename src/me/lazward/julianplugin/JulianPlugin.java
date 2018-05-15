@@ -466,7 +466,7 @@ public class JulianPlugin extends JavaPlugin implements Listener {
 
 		}
 
-		Bukkit.broadcastMessage(p.getName() + "has stopped time at " + t);
+		Bukkit.broadcastMessage(p.getName() + " has stopped time at " + t);
 
 		JulianPlugin plugin = this;
 
@@ -477,6 +477,7 @@ public class JulianPlugin extends JavaPlugin implements Listener {
 			public void run() {
 
 				stopper = p;
+				stopper.setVelocity(velocities.get(stopper.getUniqueId()));
 				countdown(world);
 
 			}
