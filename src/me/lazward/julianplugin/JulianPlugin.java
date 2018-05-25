@@ -30,6 +30,7 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityTargetEvent;
 import org.bukkit.event.entity.EntityTargetLivingEntityEvent;
+import org.bukkit.event.entity.EntityTeleportEvent;
 import org.bukkit.event.entity.ProjectileLaunchEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryOpenEvent;
@@ -72,7 +73,7 @@ public class JulianPlugin extends JavaPlugin implements Listener {
 		weaponslist.put("kickhammer", new CustomWeapon(ChatColor.GOLD + "The Kickhammer", Arrays.asList("A legendary weapon made for gods.", "Will instantly smite down anyone it hits."), Material.GOLD_AXE, true));
 		weaponslist.put("world", new CustomWeapon(ChatColor.GOLD + "The World", Arrays.asList("Gives you the ability to stop time for ten seconds."), Material.WATCH, true));
 		weaponslist.put("sworld", new CustomWeapon(ChatColor.GOLD + "Star Platinum: The World", Arrays.asList("Stop time for five seconds."), Material.WATCH, true));
-		getServer().getLogger().info("Julian's Custom Plugin v0.2.1 has been loaded. Hello!");
+		getServer().getLogger().info("Julian's Custom Plugin v0.2.2 has been loaded. Hello!");
 	}
 
 	public void onDisable() {
@@ -451,7 +452,7 @@ public class JulianPlugin extends JavaPlugin implements Listener {
 				i.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, (int) 60L, 10));
 
 			} else {
-
+				
 				i.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, (int) howLong, 10));
 
 			}
@@ -622,7 +623,7 @@ public class JulianPlugin extends JavaPlugin implements Listener {
 	@EventHandler
 	public void onEntityTargetLivingEntityEvent(EntityTargetLivingEntityEvent e) {
 
-		if (isTimeStopped && e.getEntity().getEntityId() == stopper.getEntityId()) {
+		if (isTimeStopped && e.getEntity().getEntityId() != stopper.getEntityId()) {
 
 			e.setCancelled(true);
 
@@ -644,7 +645,7 @@ public class JulianPlugin extends JavaPlugin implements Listener {
 	@EventHandler
 	public void onEntityTargetEvent(EntityTargetEvent e) {
 
-		if (isTimeStopped && e.getEntity().getEntityId() == stopper.getEntityId()) {
+		if (isTimeStopped && e.getEntity().getEntityId() != stopper.getEntityId()) {
 
 			e.setCancelled(true);
 
@@ -721,6 +722,19 @@ public class JulianPlugin extends JavaPlugin implements Listener {
 		}
 		
 	}
+	
+	@EventHandler
+	public void onEntityTeleportEvent(EntityTeleportEvent e) {
+		
+		if (isTimeStopped && !e.getEntity().equals(stopper)) {
+			
+			e.setCancelled(true);
+			
+		}
+		
+	}
+	
+	/*
 
 	@EventHandler
 	public void onPlayerJoin(PlayerJoinEvent e) {
@@ -729,6 +743,8 @@ public class JulianPlugin extends JavaPlugin implements Listener {
 				+ "Hello! Congrats on getting through the first year of college. I just wanted to mention that after starting up the server and looking around the world we all built I couldn't help but have a huge grin on my face. I truly missed this place. Let's keep it going. \n(July 27th 2016-August 9th 2017) ~ (May 12th 2018 - ???)");
 
 	}
+	
+	*/
 
 	@EventHandler
 	public void log(String x) {
