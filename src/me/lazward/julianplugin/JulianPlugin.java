@@ -448,7 +448,7 @@ public class JulianPlugin extends JavaPlugin implements Listener {
 		for (LivingEntity i : e) {
 
 			if (i instanceof Player) {
-
+				
 				i.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, (int) 60L, 10));
 
 			} else {
@@ -623,7 +623,7 @@ public class JulianPlugin extends JavaPlugin implements Listener {
 	@EventHandler
 	public void onEntityTargetLivingEntityEvent(EntityTargetLivingEntityEvent e) {
 
-		if (isTimeStopped && e.getEntity().getEntityId() != stopper.getEntityId()) {
+		if (isTimeStopped && !(e.getEntity() instanceof Player)) {
 
 			e.setCancelled(true);
 
@@ -645,12 +645,12 @@ public class JulianPlugin extends JavaPlugin implements Listener {
 	@EventHandler
 	public void onEntityTargetEvent(EntityTargetEvent e) {
 
-		if (isTimeStopped && e.getEntity().getEntityId() != stopper.getEntityId()) {
+		if (isTimeStopped && !(e.getEntity() instanceof Player)) {
 
 			e.setCancelled(true);
 
 		}
-
+		
 	}
 
 	@EventHandler
