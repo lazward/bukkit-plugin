@@ -1,5 +1,5 @@
 name: JulianPlugin
-version: 0.2.2
+version: 0.2.3
 author: Julian Lee
 main: me.lazward.julianplugin.JulianPlugin
 commands:
@@ -9,3 +9,5 @@ commands:
       description: Return the world's total number of ticks.
    ci:
       description: Custom item
+   wolf:
+      description: Get wolf owner

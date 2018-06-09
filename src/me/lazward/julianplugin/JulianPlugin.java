@@ -16,49 +16,26 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.World;
+import org.bukkit.block.Block;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Wolf;
 import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
-import org.bukkit.event.block.Action;
-import org.bukkit.event.block.BlockBreakEvent;
-import org.bukkit.event.block.BlockPlaceEvent;
-import org.bukkit.event.entity.EntityAirChangeEvent;
-import org.bukkit.event.entity.EntityDamageByEntityEvent;
-import org.bukkit.event.entity.EntityDamageEvent;
-import org.bukkit.event.entity.EntityTargetEvent;
-import org.bukkit.event.entity.EntityTargetLivingEntityEvent;
-import org.bukkit.event.entity.EntityTeleportEvent;
-import org.bukkit.event.entity.ProjectileLaunchEvent;
-import org.bukkit.event.inventory.InventoryClickEvent;
-import org.bukkit.event.inventory.InventoryOpenEvent;
-import org.bukkit.event.player.PlayerBedEnterEvent;
-import org.bukkit.event.player.PlayerBedLeaveEvent;
-import org.bukkit.event.player.PlayerDropItemEvent;
-import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerKickEvent;
-import org.bukkit.event.player.PlayerMoveEvent;
-import org.bukkit.event.player.PlayerPickupItemEvent;
-import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.event.player.PlayerToggleSneakEvent;
-import org.bukkit.event.player.PlayerToggleSprintEvent;
-import org.bukkit.event.player.PlayerVelocityEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.util.Vector;
 
-public class JulianPlugin extends JavaPlugin implements Listener {
+public class JulianPlugin extends JavaPlugin {
 
 	public ArrayList<UUID> playersSleeping = new ArrayList<UUID>();
 	HashMap<String, CustomWeapon> weaponslist = new HashMap<String, CustomWeapon>();
 	// HashMap<String, Player> ts = new HashMap<String, Player>() ;
-	Player stopper;
+	private Player stopper;
 
-	boolean isTimeStopped = false;
+	private boolean isTimeStopped = false;
 
 	public int count = 0;
 
@@ -67,13 +44,15 @@ public class JulianPlugin extends JavaPlugin implements Listener {
 	int cd;
 
 	HashMap<UUID, Vector> velocities = new HashMap<UUID, Vector>();
+	
+	Long t ;
 
 	public void onEnable() {
-		Bukkit.getPluginManager().registerEvents(this, this);
+		Bukkit.getPluginManager().registerEvents(new EventListener(this), this);
 		weaponslist.put("kickhammer", new CustomWeapon(ChatColor.GOLD + "The Kickhammer", Arrays.asList("A legendary weapon made for gods.", "Will instantly smite down anyone it hits."), Material.GOLD_AXE, true));
 		weaponslist.put("world", new CustomWeapon(ChatColor.GOLD + "The World", Arrays.asList("Gives you the ability to stop time for ten seconds."), Material.WATCH, true));
 		weaponslist.put("sworld", new CustomWeapon(ChatColor.GOLD + "Star Platinum: The World", Arrays.asList("Stop time for five seconds."), Material.WATCH, true));
-		getServer().getLogger().info("Julian's Custom Plugin v0.2.2 has been loaded. Hello!");
+		getServer().getLogger().info("Julian's Custom Plugin v0.2.3 has been loaded. Hello!");
 	}
 
 	public void onDisable() {
@@ -169,7 +148,7 @@ public class JulianPlugin extends JavaPlugin implements Listener {
 		} else if (command.getName().equalsIgnoreCase("ticks")) { // check time
 
 			String s = String.valueOf(getServer().getWorlds().get(0).getFullTime());
-			sender.sendMessage(s);
+			sender.sendMessage("Full ticks: " + s);
 			return true;
 
 		} else if (command.getName().equalsIgnoreCase("ci")) {
@@ -213,26 +192,110 @@ public class JulianPlugin extends JavaPlugin implements Listener {
 				}
 
 				return true;
+				
 			} else {
 
 				sender.sendMessage("Only players can use that command!");
 
 			}
+			
+		} else if (command.getName().equalsIgnoreCase("wolf")) {
+			
+			if ((sender instanceof Player)) {
+			Player s = (Player) sender ;
+			
+			Block[] bs = s.getLineOfSight(null, 10).toArray(new Block[0]);
+			
+			boolean found = false ;
+			
+			for (Block b : bs) {
+				
+				for (Entity e : s.getNearbyEntities(10, 10, 10)) {
+				
+				if (e.getLocation().distance(b.getLocation()) < 2) {
+					
+					if (e instanceof Wolf) {
+						
+						if (((Wolf) e).isTamed()) {
+							
+							sender.sendMessage("Owner: " + ((Wolf) e).getOwner().getName());
+							found = true ;
+							
+						} else {
+							
+							sender.sendMessage("This wolf is not tamed!") ;
+							found = true ;
+						}
+						
+					} else {
+						
+						sender.sendMessage("This is not a wolf!") ;
+						found = true ;
+						
+					}
+					
+				}
+				
+			}
+			
+			}
+			
+			if (!found) {
+			
+				sender.sendMessage("Wolf not found!") ;
+			
+			}
+			
+			return true ;
+							
+			} else {
+				
+				sender.sendMessage("Only players can use this command!") ;
+				return true ;
+				
+			}
+			
 		}
 
 		return true;
 
 	}
-
-	@EventHandler
-	public void onBedEnter(PlayerBedEnterEvent event) {
-
-		this.playersSleeping.add(event.getPlayer().getUniqueId());
-
-		Bukkit.broadcastMessage(event.getPlayer().getDisplayName() + " has went to bed.");
-
-		testForSleepPercent();
-
+	
+	public boolean isTimeStopped() {
+		
+		return isTimeStopped ;
+		
+	}
+	
+	public Player getStopper() {
+		
+		return stopper ;
+		
+	}
+	
+	public void setStopper(Player p) {
+		
+		stopper = p ;
+		
+		
+	}
+	
+	public HashMap<UUID, Vector> getVelocities() {
+		
+		return velocities ;
+		
+	}
+	
+	public void putVelocity(UUID u, Vector v) {
+		
+		velocities.put(u, v) ;
+		
+	}
+	
+	public HashMap<String, CustomWeapon> getWeapons() {
+		
+		return weaponslist ;
+		
 	}
 
 	public void testForSleepPercent() {
@@ -256,43 +319,6 @@ public class JulianPlugin extends JavaPlugin implements Listener {
 			this.playersSleeping.clear();
 
 		}
-
-	}
-
-	public void onBedLeave(UUID uuid) {
-
-		if (this.playersSleeping.contains(uuid)) {
-
-			this.playersSleeping.remove(uuid);
-			long time = ((World) getServer().getWorlds().get(0)).getTime();
-			if (time >= 12541 && time <= 23458) {
-
-				Bukkit.broadcastMessage(Bukkit.getPlayer(uuid).getDisplayName() + " has gotten out of bed.");
-
-			}
-
-		}
-
-	}
-
-	@EventHandler
-	public void onBedLeave(PlayerBedLeaveEvent event) {
-
-		onBedLeave(event.getPlayer().getUniqueId());
-
-	}
-
-	@EventHandler
-	public void onBedLeave(PlayerQuitEvent event) {
-
-		onBedLeave(event.getPlayer().getUniqueId());
-
-	}
-
-	@EventHandler
-	public void onBedLeave(PlayerKickEvent event) {
-
-		onBedLeave(event.getPlayer().getUniqueId());
 
 	}
 
@@ -322,111 +348,21 @@ public class JulianPlugin extends JavaPlugin implements Listener {
 
 	}
 
-	@EventHandler
-	public void onEntityDamageByEntity(EntityDamageByEntityEvent event) {
-
-		if (isTimeStopped && event.getDamager().getEntityId() != stopper.getEntityId()) {
-
-			event.setCancelled(true);
-			return;
-
-		}
-
-		if ((event.getDamager() instanceof Player) && (event.getEntity() instanceof Player)) {
-
-			Player player = (Player) event.getDamager();
-			Player target = (Player) event.getEntity();
-			World world = (World) getServer().getWorlds().get(0);
-
-			if (player.getInventory().getItemInMainHand() != null) {
-
-				ItemStack helditem = player.getInventory().getItemInMainHand();
-
-				if (helditem.equals(getWeapon("kickhammer"))) {
-					if (player.getName().equals("Juelz0312")) {
-						Location loc = target.getLocation();
-						target.kickPlayer("YOU HAVE BEEN SMITTEN.");
-						world.strikeLightningEffect(loc);
-						return;
-
-					}
-
-				}
-
-			}
-
-			if (isTimeStopped) {
-
-				Vector v = velocities.get(target.getUniqueId());
-			    Vector t = target.getLocation().toVector().clone();
-			    Vector p = player.getLocation().toVector().clone();
-			    
-			    Vector direction = t.subtract(p).normalize();
-			    
-			    v.add(direction) ;
-			    velocities.put(target.getUniqueId(), v) ;
-
-			}
-
-		}
-
-	}
-
-	@EventHandler
-	public void onPlayerPickupItem(PlayerPickupItemEvent event) {
-
-		Player player = event.getPlayer();
-
-		ItemStack item = event.getItem().getItemStack();
-
-		if (!player.getName().equals("Juelz0312")) {
-			if (item.equals(getWeapon("kickhammer"))) {
-				ItemMeta newmeta = item.getItemMeta();
-				newmeta.setUnbreakable(false);
-				newmeta.setLore(Arrays.asList("A legendary weapon whose powers have disappeared.",
-						"It is pretty much useless now."));
-				item.setItemMeta(newmeta);
-				item.setDurability((short) 32);
-			}
-		}
-	}
-
-	@EventHandler
-	public void toggle(PlayerInteractEvent event) {
-
-		Player player = event.getPlayer();
-
-		ItemStack inHand = player.getInventory().getItemInHand();
-
-		if ((inHand.equals(weaponslist.get("world").getItemStack())
-				|| inHand.equals(weaponslist.get("sworld").getItemStack())) && !isTimeStopped) {
-
-			if (event.getAction().equals(Action.RIGHT_CLICK_AIR)
-					|| event.getAction().RIGHT_CLICK_BLOCK == Action.RIGHT_CLICK_BLOCK) {
-
-				stopTime(player, inHand);
-
-			}
-
-		}
-
-	}
-
 	public void stopTime(Player p, ItemStack h) {
 
 		World world = (World) getServer().getWorlds().get(0);
-		final Long t = world.getFullTime();
+		setFTime(world.getFullTime());
 		long howLong = 0;
 		
 		if (h.equals(weaponslist.get("sworld").getItemStack())) {
 			
-			howLong = 160L;
-			count = 5;
+			howLong = 80L;
+			count = 1;
 			
 		} else {
 			
-			howLong = 260L;
-			count = 10;
+			howLong = 160L;
+			count = 5;
 		}
 
 		for (Player j : Bukkit.getOnlinePlayers()) {
@@ -455,6 +391,12 @@ public class JulianPlugin extends JavaPlugin implements Listener {
 				
 				i.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, (int) howLong, 10));
 
+			}
+			
+			if (i.getFireTicks() != 0) {
+				
+				i.setFireTicks(i.getFireTicks() + count + 3);
+				
 			}
 
 			i.addPotionEffect(new PotionEffect(PotionEffectType.CONFUSION, (int) 60L, 10));
@@ -489,7 +431,7 @@ public class JulianPlugin extends JavaPlugin implements Listener {
 
 			public void run() {
 
-				resumeTime(world, t);
+				resumeTime(world, getFTime());
 
 			}
 
@@ -498,6 +440,12 @@ public class JulianPlugin extends JavaPlugin implements Listener {
 	}
 
 	public void resumeTime(World w, Long t) {
+		
+		if (isTimeStopped == false) {
+			
+			return ;
+			
+		}
 
 		isTimeStopped = false;
 
@@ -516,6 +464,7 @@ public class JulianPlugin extends JavaPlugin implements Listener {
 		}
 
 		stopper = null;
+		setFTime(null) ;
 
 	}
 
@@ -544,196 +493,6 @@ public class JulianPlugin extends JavaPlugin implements Listener {
 		}, 0L, 20L);
 
 	}
-
-	@EventHandler
-	public void onPlayerMove(PlayerMoveEvent e) {
-
-		if (isTimeStopped && !e.getPlayer().equals(stopper)) { // && !e.getPlayer().equals(stopper)
-
-			e.setCancelled(true);
-			Location location = e.getFrom();
-			location.setPitch(e.getTo().getPitch());
-			location.setYaw(e.getTo().getYaw());
-			e.getPlayer().teleport(location);
-
-		}
-
-	}
-
-	@EventHandler
-	public void onBlockBreakEvent(BlockBreakEvent e) {
-
-		if (isTimeStopped && !e.getPlayer().equals(stopper)) {
-
-			e.setCancelled(true);
-
-		}
-
-	}
-
-	@EventHandler
-	public void onBlockPlaceEvent(BlockPlaceEvent e) {
-
-		if (isTimeStopped && !e.getPlayer().equals(stopper)) {
-
-			e.setCancelled(true);
-
-		}
-
-	}
-
-	@EventHandler
-	public void onInventoryOpenEvent(InventoryOpenEvent e) {
-
-		if (isTimeStopped && !e.getPlayer().equals(stopper)) {
-
-			e.setCancelled(true);
-
-		}
-
-	}
-
-	@EventHandler
-	public void onInventoryClickEvent(InventoryClickEvent e) {
-
-		if (isTimeStopped && !e.getWhoClicked().equals(stopper)) {
-
-			e.setCancelled(true);
-
-		}
-		
-		if(ChatColor.stripColor(e.getInventory().getName()).equalsIgnoreCase("Legendary Weapons")) {
-			
-			Player p = (Player) e.getWhoClicked() ;
-			e.setCancelled(true);
-			
-			if (e.getCurrentItem() == null || e.getCurrentItem().getType().equals(Material.AIR) || !e.getCurrentItem().hasItemMeta()) {
-				
-				return ;
-				
-			}
-			
-			p.getInventory().addItem(e.getCurrentItem());
-			p.closeInventory();
-			
-		}
-
-	}
-
-	@EventHandler
-	public void onEntityTargetLivingEntityEvent(EntityTargetLivingEntityEvent e) {
-
-		if (isTimeStopped && !(e.getEntity() instanceof Player)) {
-
-			e.setCancelled(true);
-
-		}
-
-	}
-
-	@EventHandler
-	public void onPlayerDropItem(PlayerDropItemEvent e) {
-
-		if (isTimeStopped && !e.getPlayer().equals(stopper)) {
-
-			e.setCancelled(true);
-
-		}
-
-	}
-
-	@EventHandler
-	public void onEntityTargetEvent(EntityTargetEvent e) {
-
-		if (isTimeStopped && !(e.getEntity() instanceof Player)) {
-
-			e.setCancelled(true);
-
-		}
-		
-	}
-
-	@EventHandler
-	public void onPlayerToggleSneakEvent(PlayerToggleSneakEvent e) {
-
-		if (isTimeStopped && !e.getPlayer().equals(stopper)) {
-
-			e.setCancelled(true);
-
-		}
-
-	}
-
-	@EventHandler
-	public void onPlayerToggleSprintEvent(PlayerToggleSprintEvent e) {
-
-		if (isTimeStopped && !e.getPlayer().equals(stopper)) {
-
-			e.setCancelled(true);
-
-		}
-
-	}
-
-	@EventHandler
-	public void onPlayerVelocityEvent(PlayerVelocityEvent e) {
-
-		Player p = e.getPlayer();
-		EntityDamageEvent last = p.getLastDamageCause();
-
-		if (last == null || !(last instanceof EntityDamageByEntityEvent)) {
-
-			return;
-
-		}
-
-		if (isTimeStopped && ((EntityDamageByEntityEvent) last).getDamager().getEntityId() == stopper.getEntityId()) {
-
-			Vector v = velocities.get(p.getUniqueId());
-			v = v.add(e.getVelocity());
-			velocities.put(p.getUniqueId(), v);
-
-		}
-
-	}
-
-	@EventHandler
-	public void onProjectileLaunchEvent(ProjectileLaunchEvent e) {
-
-		if (isTimeStopped) {
-
-			if (!e.getEntity().getShooter().equals(stopper)) {
-
-				e.setCancelled(true);
-
-			}
-
-		}
-
-	}
-	
-	@EventHandler
-	public void onEntityAirChangeEvent(EntityAirChangeEvent e) {
-		
-		if (isTimeStopped && !e.getEntity().equals(stopper)) {
-			
-			e.setCancelled(true);
-			
-		}
-		
-	}
-	
-	@EventHandler
-	public void onEntityTeleportEvent(EntityTeleportEvent e) {
-		
-		if (isTimeStopped && !e.getEntity().equals(stopper)) {
-			
-			e.setCancelled(true);
-			
-		}
-		
-	}
-	
 	/*
 
 	@EventHandler
@@ -745,13 +504,7 @@ public class JulianPlugin extends JavaPlugin implements Listener {
 	}
 	
 	*/
-
-	@EventHandler
-	public void log(String x) {
-
-		Bukkit.getConsoleSender().sendMessage(x);
-
-	}
+	
 	
 	@EventHandler
     public void openGUI(Player p) {
@@ -767,6 +520,18 @@ public class JulianPlugin extends JavaPlugin implements Listener {
 		}
 		
 		p.openInventory(inv) ;
+		
+	}
+	
+	public void setFTime(Long l) {
+		
+		t = l ;
+		
+	}
+	
+	public long getFTime() {
+		
+		return t ;
 		
 	}
 
