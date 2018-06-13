@@ -431,6 +431,11 @@ public class JulianPlugin extends JavaPlugin {
 
 			public void run() {
 
+				if (isTimeStopped == false) {
+					
+					return ;
+					
+				}
 				resumeTime(world, getFTime());
 
 			}

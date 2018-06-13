@@ -151,13 +151,6 @@ public class EventListener implements Listener {
 	public void onPlayerPickupItem(PlayerPickupItemEvent event) {
 
 		Player player = event.getPlayer();
-		
-		if (player != p.getStopper()) {
-			
-			event.setCancelled(true);
-			return ;
-			
-		}
 
 		ItemStack item = event.getItem().getItemStack();
 
