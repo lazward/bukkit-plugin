@@ -40,15 +40,15 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.util.Vector;
 
 public class EventListener implements Listener {
-	
-	JulianPlugin p ;
-	
+
+	JulianPlugin p;
+
 	public EventListener(JulianPlugin plugin) {
-		
-		 p = plugin ;
-		
+
+		p = plugin;
+
 	}
-	
+
 	@EventHandler
 	public void onBedEnter(PlayerBedEnterEvent event) {
 
@@ -59,7 +59,7 @@ public class EventListener implements Listener {
 		p.testForSleepPercent();
 
 	}
-	
+
 	public void onBedLeave(UUID uuid) {
 
 		if (p.playersSleeping.contains(uuid)) {
@@ -96,7 +96,7 @@ public class EventListener implements Listener {
 		onBedLeave(event.getPlayer().getUniqueId());
 
 	}
-	
+
 	@EventHandler
 	public void onEntityDamageByEntity(EntityDamageByEntityEvent event) {
 
@@ -133,20 +133,20 @@ public class EventListener implements Listener {
 			if (p.isTimeStopped()) {
 
 				Vector v = p.getVelocities().get(target.getUniqueId());
-			    Vector t = target.getLocation().toVector().clone();
-			    Vector pl = player.getLocation().toVector().clone();
-			    
-			    Vector direction = t.subtract(pl).normalize();
-			    
-			    v.add(direction) ;
-			    p.putVelocity(target.getUniqueId(), v) ;
+				Vector t = target.getLocation().toVector().clone();
+				Vector pl = player.getLocation().toVector().clone();
+
+				Vector direction = t.subtract(pl).normalize();
+
+				v.add(direction);
+				p.putVelocity(target.getUniqueId(), v);
 
 			}
 
 		}
 
 	}
-	
+
 	@EventHandler
 	public void onPlayerPickupItem(PlayerPickupItemEvent event) {
 
@@ -167,34 +167,48 @@ public class EventListener implements Listener {
 	}
 
 	@EventHandler
-	public void toggle(PlayerInteractEvent event) {
-		
+	public void onPlayerInteractEvent(PlayerInteractEvent event) {
+
 		if (event.getAction() == Action.RIGHT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_BLOCK) {
 
-		Player player = event.getPlayer();
+			Player player = event.getPlayer();
+			ItemStack inHand = player.getInventory().getItemInHand();
 
-		ItemStack inHand = player.getInventory().getItemInHand();
+			if ((inHand.equals(p.getWeapons().get("world").getItemStack())
+					|| inHand.equals(p.getWeapons().get("sworld").getItemStack())) && !p.isTimeStopped()) {
 
-		if ((inHand.equals(p.getWeapons().get("world").getItemStack())
-				|| inHand.equals(p.getWeapons().get("sworld").getItemStack())) && !p.isTimeStopped()) {
-
+				player.sendMessage("test");
+				
 				if (p.isTimeStopped()) {
-					
+
 					p.resumeTime(p.getServer().getWorlds().get(0), p.getFTime());
-					
+
 				} else {
-				
-				p.stopTime(player, inHand);
-				
+
+					p.stopTime(player, inHand);
+
 				}
 
+			} else if (inHand.getType() == Material.AIR && player.getDisplayName().equals("Juelz0312")) {
+				
+				if (p.getHakai() == true) {
 
-		}
-		
+					player.sendMessage("You ready your fist.");
+					p.setHakai(true);
+
+				} else {
+
+					player.sendMessage("You lower your fist.");
+					p.setHakai(false);
+
+				}
+				
+			}
+
 		}
 
 	}
-	
+
 	@EventHandler
 	public void onPlayerMove(PlayerMoveEvent e) {
 
@@ -220,7 +234,7 @@ public class EventListener implements Listener {
 		}
 
 	}
-	
+
 	@EventHandler
 	public void onBlockPlaceEvent(BlockPlaceEvent e) {
 
@@ -242,7 +256,7 @@ public class EventListener implements Listener {
 		}
 
 	}
-	
+
 	@EventHandler
 	public void onInventoryClickEvent(InventoryClickEvent e) {
 
@@ -251,25 +265,25 @@ public class EventListener implements Listener {
 			e.setCancelled(true);
 
 		}
-		
-		if(ChatColor.stripColor(e.getInventory().getName()).equalsIgnoreCase("Legendary Weapons")) {
-			
-			Player player = (Player) e.getWhoClicked() ;
+
+		if (ChatColor.stripColor(e.getInventory().getName()).equalsIgnoreCase("Legendary Weapons")) {
+
+			Player player = (Player) e.getWhoClicked();
 			e.setCancelled(true);
-			
-			if (e.getCurrentItem() == null || e.getCurrentItem().getType().equals(Material.AIR) || !e.getCurrentItem().hasItemMeta()) {
-				
-				return ;
-				
+
+			if (e.getCurrentItem() == null || e.getCurrentItem().getType().equals(Material.AIR)
+					|| !e.getCurrentItem().hasItemMeta()) {
+
+				return;
+
 			}
-			
+
 			player.getInventory().addItem(e.getCurrentItem());
 			player.closeInventory();
-			
+
 		}
 
 	}
-	
 
 	@EventHandler
 	public void onEntityTargetLivingEntityEvent(EntityTargetLivingEntityEvent e) {
@@ -281,7 +295,7 @@ public class EventListener implements Listener {
 		}
 
 	}
-	
+
 	@EventHandler
 	public void onPlayerDropItem(PlayerDropItemEvent e) {
 
@@ -292,7 +306,7 @@ public class EventListener implements Listener {
 		}
 
 	}
-	
+
 	@EventHandler
 	public void onEntityTargetEvent(EntityTargetEvent e) {
 
@@ -301,9 +315,9 @@ public class EventListener implements Listener {
 			e.setCancelled(true);
 
 		}
-		
+
 	}
-	
+
 	@EventHandler
 	public void onPlayerToggleSneakEvent(PlayerToggleSneakEvent e) {
 
@@ -325,7 +339,7 @@ public class EventListener implements Listener {
 		}
 
 	}
-	
+
 	@EventHandler
 	public void onPlayerVelocityEvent(PlayerVelocityEvent e) {
 
@@ -338,7 +352,8 @@ public class EventListener implements Listener {
 
 		}
 
-		if (p.isTimeStopped() && ((EntityDamageByEntityEvent) last).getDamager().getEntityId() == p.getStopper().getEntityId()) {
+		if (p.isTimeStopped()
+				&& ((EntityDamageByEntityEvent) last).getDamager().getEntityId() == p.getStopper().getEntityId()) {
 
 			Vector v = p.getVelocities().get(player.getUniqueId());
 			v = v.add(e.getVelocity());
@@ -347,7 +362,7 @@ public class EventListener implements Listener {
 		}
 
 	}
-	
+
 	@EventHandler
 	public void onProjectileLaunchEvent(ProjectileLaunchEvent e) {
 
@@ -362,40 +377,41 @@ public class EventListener implements Listener {
 		}
 
 	}
-	
+
 	@EventHandler
 	public void onEntityAirChangeEvent(EntityAirChangeEvent e) {
-		
+
 		if (p.isTimeStopped() && !e.getEntity().equals(p.getStopper())) {
-			
+
 			e.setCancelled(true);
-			
+
 		}
-		
+
 	}
-	
+
 	@EventHandler
 	public void onEntityTeleportEvent(EntityTeleportEvent e) {
-		
+
 		if (p.isTimeStopped() && !e.getEntity().equals(p.getStopper())) {
-			
+
 			e.setCancelled(true);
-			
+
 		}
-		
+
 	}
-	
+
 	@EventHandler
 	public void onEntityDamageEvent(EntityDamageEvent e) {
-		
-		if (p.isTimeStopped() && !e.getEntity().equals(p.getStopper()) && (e.getCause() == DamageCause.FIRE_TICK || e.getCause() == DamageCause.FIRE || e.getCause() == DamageCause.DROWNING)) {
-			
+
+		if (p.isTimeStopped() && !e.getEntity().equals(p.getStopper()) && (e.getCause() == DamageCause.FIRE_TICK
+				|| e.getCause() == DamageCause.FIRE || e.getCause() == DamageCause.DROWNING)) {
+
 			e.setCancelled(true);
-			
+
 		}
-		
+
 	}
-	
+
 	@EventHandler
 	public void log(String x) {
 

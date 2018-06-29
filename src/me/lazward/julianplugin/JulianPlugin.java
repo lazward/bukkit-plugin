@@ -46,13 +46,15 @@ public class JulianPlugin extends JavaPlugin {
 	HashMap<UUID, Vector> velocities = new HashMap<UUID, Vector>();
 	
 	Long t ;
+	
+	private boolean hakai = false ;
 
 	public void onEnable() {
 		Bukkit.getPluginManager().registerEvents(new EventListener(this), this);
 		weaponslist.put("kickhammer", new CustomWeapon(ChatColor.GOLD + "The Kickhammer", Arrays.asList("A legendary weapon made for gods.", "Will instantly smite down anyone it hits."), Material.GOLD_AXE, true));
 		weaponslist.put("world", new CustomWeapon(ChatColor.GOLD + "The World", Arrays.asList("Gives you the ability to stop time for ten seconds."), Material.WATCH, true));
 		weaponslist.put("sworld", new CustomWeapon(ChatColor.GOLD + "Star Platinum: The World", Arrays.asList("Stop time for five seconds."), Material.WATCH, true));
-		getServer().getLogger().info("Julian's Custom Plugin v0.2.3 has been loaded. Hello!");
+		getServer().getLogger().info("Julian's Custom Plugin v0.2.4 has been loaded. Hello!");
 	}
 
 	public void onDisable() {
@@ -537,6 +539,18 @@ public class JulianPlugin extends JavaPlugin {
 	public long getFTime() {
 		
 		return t ;
+		
+	}
+	
+	public void setHakai(boolean b) {
+		
+		hakai = b ;
+		
+	}
+	
+	public boolean getHakai() {
+		
+		return hakai ;
 		
 	}
 
