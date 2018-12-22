@@ -28,6 +28,7 @@ import org.bukkit.event.player.PlayerBedEnterEvent;
 import org.bukkit.event.player.PlayerBedLeaveEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerItemBreakEvent;
 import org.bukkit.event.player.PlayerKickEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerPickupItemEvent;
@@ -191,6 +192,8 @@ public class EventListener implements Listener {
 
 			} else if (inHand.getType() == Material.AIR && player.getDisplayName().equals("Juelz0312")) {
 				
+				/*
+				
 				if (p.getHakai() == true) {
 
 					player.sendMessage("You ready your fist.");
@@ -202,6 +205,8 @@ public class EventListener implements Listener {
 					p.setHakai(false);
 
 				}
+				
+				*/
 				
 			}
 
@@ -410,6 +415,40 @@ public class EventListener implements Listener {
 
 		}
 
+	}
+	
+	@EventHandler
+	public void onPlayerItemBreakEvent(PlayerItemBreakEvent e) {
+		
+		ItemStack b = e.getBrokenItem() ;
+		
+		if (b.getItemMeta().getDisplayName().equals(p.getWeapon("yato").getItemMeta().getDisplayName())) {
+			
+			Player player = e.getPlayer() ;
+			player.sendMessage("The Omega Yato has run out of energy.") ;
+			
+			Bukkit.getServer().getScheduler().scheduleSyncDelayedTask(p, new Runnable() {
+				
+				public void run() {
+					
+					if (player.getInventory().firstEmpty() == -1) {
+						
+						player.sendMessage("You don't have enough space for the Omega Yato.");
+						
+					} else {
+						
+						player.sendMessage("The Omega Yato has been restored.");
+						player.getInventory().addItem(p.getWeapon("yato")) ;
+						
+					}
+					
+				}
+				
+				
+			}, 300) ;
+			
+		}
+		
 	}
 
 	@EventHandler

@@ -1,5 +1,5 @@
 name: JulianPlugin
-version: 0.2.4
+version: 0.2.5
 author: Julian Lee
 main: me.lazward.julianplugin.JulianPlugin
 commands:

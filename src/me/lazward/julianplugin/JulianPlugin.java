@@ -51,9 +51,10 @@ public class JulianPlugin extends JavaPlugin {
 
 	public void onEnable() {
 		Bukkit.getPluginManager().registerEvents(new EventListener(this), this);
-		weaponslist.put("kickhammer", new CustomWeapon(ChatColor.GOLD + "The Kickhammer", Arrays.asList("A legendary weapon made for gods.", "Will instantly smite down anyone it hits."), Material.GOLD_AXE, true));
-		weaponslist.put("world", new CustomWeapon(ChatColor.GOLD + "The World", Arrays.asList("Gives you the ability to stop time for ten seconds."), Material.WATCH, true));
-		weaponslist.put("sworld", new CustomWeapon(ChatColor.GOLD + "Star Platinum: The World", Arrays.asList("Stop time for five seconds."), Material.WATCH, true));
+		weaponslist.put("kickhammer", new CustomWeapon(ChatColor.GOLD + "The Kickhammer", Arrays.asList("A legendary weapon made for gods.", "Will instantly smite down anyone it hits."), Material.GOLDEN_AXE, true));
+		weaponslist.put("world", new CustomWeapon(ChatColor.GOLD + "The World", Arrays.asList("Gives you the ability to stop time for five seconds."), Material.CLOCK, true));
+		weaponslist.put("sworld", new CustomWeapon(ChatColor.GOLD + "Star Platinum: The World", Arrays.asList("Stop time for one second."), Material.CLOCK, true));
+		weaponslist.put("yato", new CustomWeapon(ChatColor.GOLD + "Omega Yato", Arrays.asList(""), Material.GOLDEN_SWORD, false)) ;
 		getServer().getLogger().info("Julian's Custom Plugin v0.2.4 has been loaded. Hello!");
 	}
 
@@ -229,10 +230,7 @@ public class JulianPlugin extends JavaPlugin {
 							found = true ;
 						}
 						
-					} else {
-						
-						sender.sendMessage("This is not a wolf!") ;
-						found = true ;
+						break ;
 						
 					}
 					
@@ -415,7 +413,7 @@ public class JulianPlugin extends JavaPlugin {
 
 		JulianPlugin plugin = this;
 
-		plugin.getServer().getScheduler().cancelAllTasks();
+		//plugin.getServer().getScheduler().cancelAllTasks();
 
 		cd = this.getServer().getScheduler().scheduleSyncDelayedTask(this, new Runnable() {
 

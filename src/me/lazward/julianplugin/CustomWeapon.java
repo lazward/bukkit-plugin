@@ -3,6 +3,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import java.util.List;
 import org.bukkit.Material;
+import org.bukkit.enchantments.Enchantment;
 
 public class CustomWeapon {
 	
@@ -44,6 +45,12 @@ public class CustomWeapon {
 	public void setUnbreakable() {
 		
 		itemstack.getItemMeta().setUnbreakable(true);
+		
+	}
+	
+	public void addEnchantment(Enchantment e,int level, boolean b) {
+		
+		itemstack.getItemMeta().addEnchant(e, level, b) ;
 		
 	}
 
