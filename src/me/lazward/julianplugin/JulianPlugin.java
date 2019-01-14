@@ -415,7 +415,7 @@ public class JulianPlugin extends JavaPlugin {
 
 		//plugin.getServer().getScheduler().cancelAllTasks();
 
-		cd = this.getServer().getScheduler().scheduleSyncDelayedTask(this, new Runnable() {
+		this.getServer().getScheduler().runTaskLater(this, new Runnable() {
 
 			public void run() {
 
@@ -427,7 +427,7 @@ public class JulianPlugin extends JavaPlugin {
 
 		}, 60L);
 
-		this.getServer().getScheduler().scheduleSyncDelayedTask(this, new Runnable() {
+		this.getServer().getScheduler().runTaskLater(this, new Runnable() {
 
 			public void run() {
 

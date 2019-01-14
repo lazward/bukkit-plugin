@@ -52,12 +52,16 @@ public class EventListener implements Listener {
 
 	@EventHandler
 	public void onBedEnter(PlayerBedEnterEvent event) {
+		
+			if (event.getBedEnterResult() == PlayerBedEnterEvent.BedEnterResult.OK) {
+				
+				p.playersSleeping.add(event.getPlayer().getUniqueId());
 
-		p.playersSleeping.add(event.getPlayer().getUniqueId());
+				Bukkit.broadcastMessage(event.getPlayer().getDisplayName() + " has went to bed.");
 
-		Bukkit.broadcastMessage(event.getPlayer().getDisplayName() + " has went to bed.");
-
-		p.testForSleepPercent();
+				p.testForSleepPercent();
+				
+			}
 
 	}
 
@@ -66,12 +70,12 @@ public class EventListener implements Listener {
 		if (p.playersSleeping.contains(uuid)) {
 
 			p.playersSleeping.remove(uuid);
-			long time = ((World) p.getServer().getWorlds().get(0)).getTime();
-			if (time >= 12541 && time <= 23458) {
+			//long time = ((World) p.getServer().getWorlds().get(0)).getTime();
+			//if (time >= 12541 && time <= 23458) {
 
 				Bukkit.broadcastMessage(Bukkit.getPlayer(uuid).getDisplayName() + " has gotten out of bed.");
 
-			}
+			//}
 
 		}
 
@@ -177,8 +181,6 @@ public class EventListener implements Listener {
 
 			if ((inHand.equals(p.getWeapons().get("world").getItemStack())
 					|| inHand.equals(p.getWeapons().get("sworld").getItemStack())) && !p.isTimeStopped()) {
-
-				player.sendMessage("test");
 				
 				if (p.isTimeStopped()) {
 
