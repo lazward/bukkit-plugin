@@ -46,8 +46,6 @@ public class JulianPlugin extends JavaPlugin {
 	HashMap<UUID, Vector> velocities = new HashMap<UUID, Vector>();
 	
 	Long t ;
-	
-	private boolean hakai = false ;
 
 	public void onEnable() {
 		Bukkit.getPluginManager().registerEvents(new EventListener(this), this);
@@ -55,6 +53,7 @@ public class JulianPlugin extends JavaPlugin {
 		weaponslist.put("world", new CustomWeapon(ChatColor.GOLD + "The World", Arrays.asList("Gives you the ability to stop time for five seconds."), Material.CLOCK, true));
 		weaponslist.put("sworld", new CustomWeapon(ChatColor.GOLD + "Star Platinum: The World", Arrays.asList("Stop time for one second."), Material.CLOCK, true));
 		weaponslist.put("yato", new CustomWeapon(ChatColor.GOLD + "Omega Yato", Arrays.asList(""), Material.GOLDEN_SWORD, false)) ;
+		weaponslist.put("bookmark", new CustomWeapon(ChatColor.GOLD + "Double Bookmark", Arrays.asList("A double-layered bookmark that Justine uses."), Material.INK_SAC,false)) ;
 		getServer().getLogger().info("Julian's Custom Plugin v0.2.4 has been loaded. Hello!");
 	}
 
@@ -215,28 +214,34 @@ public class JulianPlugin extends JavaPlugin {
 				
 				for (Entity e : s.getNearbyEntities(10, 10, 10)) {
 				
-				if (e.getLocation().distance(b.getLocation()) < 2) {
+					if (e.getLocation().distance(b.getLocation()) < 2) {
 					
-					if (e instanceof Wolf) {
+						if (e instanceof Wolf) {
 						
-						if (((Wolf) e).isTamed()) {
+							if (((Wolf) e).isTamed()) {
 							
-							sender.sendMessage("Owner: " + ((Wolf) e).getOwner().getName());
-							found = true ;
+								sender.sendMessage("Owner: " + ((Wolf) e).getOwner().getName());
+								found = true ;
 							
-						} else {
+							} else {
 							
-							sender.sendMessage("This wolf is not tamed!") ;
-							found = true ;
+								sender.sendMessage("This wolf is not tamed!") ;
+								found = true ;
+							}
+						
+							break ;
+						
 						}
-						
-						break ;
-						
-					}
 					
+					}
+				
 				}
 				
-			}
+				if (found) {
+					
+					break ;
+					
+				}
 			
 			}
 			
@@ -366,8 +371,12 @@ public class JulianPlugin extends JavaPlugin {
 		}
 
 		for (Player j : Bukkit.getOnlinePlayers()) {
-
-			velocities.put(j.getUniqueId(), j.getVelocity());
+			
+			if (j.getWorld().equals(world)) {
+				
+				velocities.put(j.getUniqueId(), j.getVelocity());				
+				
+			}
 
 		}
 
@@ -537,18 +546,6 @@ public class JulianPlugin extends JavaPlugin {
 	public long getFTime() {
 		
 		return t ;
-		
-	}
-	
-	public void setHakai(boolean b) {
-		
-		hakai = b ;
-		
-	}
-	
-	public boolean getHakai() {
-		
-		return hakai ;
 		
 	}
 

@@ -177,19 +177,27 @@ public class EventListener implements Listener {
 		if (event.getAction() == Action.RIGHT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_BLOCK) {
 
 			Player player = event.getPlayer();
-			ItemStack inHand = player.getInventory().getItemInHand();
+			ItemStack inHand = player.getInventory().getItemInMainHand();
 
 			if ((inHand.equals(p.getWeapons().get("world").getItemStack())
 					|| inHand.equals(p.getWeapons().get("sworld").getItemStack())) && !p.isTimeStopped()) {
 				
-				if (p.isTimeStopped()) {
-
-					p.resumeTime(p.getServer().getWorlds().get(0), p.getFTime());
-
+				if (!player.getWorld().equals(p.getServer().getWorlds().get(0))) {
+					
+					
+					
 				} else {
+					
+					if (p.isTimeStopped()) {
 
-					p.stopTime(player, inHand);
+						p.resumeTime(p.getServer().getWorlds().get(0), p.getFTime());
 
+					} else {
+
+						p.stopTime(player, inHand);
+
+					}	
+					
 				}
 
 			} else if (inHand.getType() == Material.AIR && player.getDisplayName().equals("Juelz0312")) {
@@ -415,6 +423,24 @@ public class EventListener implements Listener {
 
 			e.setCancelled(true);
 
+		}
+		
+		if (e.getEntity() instanceof Player) {
+			
+			Player player = (Player)e.getEntity() ;
+			
+			if (player.getHealth() - e.getDamage() < 1) {		
+				
+				if (player.getInventory().contains(p.getWeapons().get("bookmark").getItemStack())) { // NOT WORKING
+					
+					e.setCancelled(true);
+					player.setHealth(20.0);
+					Bukkit.broadcastMessage("test") ;
+					
+				}
+			
+			}
+			
 		}
 
 	}
