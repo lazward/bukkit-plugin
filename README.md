@@ -1,4 +1,4 @@
-# julian-bukkit-plugin
+# bukkit-plugin
 plugin made for private minecraft server
 
 just messing around in java. the purpose of this is to make mistakes and to be able to reflect back on them.
