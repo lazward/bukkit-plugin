@@ -18,6 +18,7 @@ import org.bukkit.event.entity.EntityAirChangeEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
+import org.bukkit.event.entity.EntityPickupItemEvent;
 import org.bukkit.event.entity.EntityTargetEvent;
 import org.bukkit.event.entity.EntityTargetLivingEntityEvent;
 import org.bukkit.event.entity.EntityTeleportEvent;
@@ -31,14 +32,17 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerItemBreakEvent;
 import org.bukkit.event.player.PlayerKickEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
-import org.bukkit.event.player.PlayerPickupItemEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerToggleSneakEvent;
 import org.bukkit.event.player.PlayerToggleSprintEvent;
 import org.bukkit.event.player.PlayerVelocityEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 import org.bukkit.util.Vector;
+
 
 public class EventListener implements Listener {
 
@@ -153,22 +157,27 @@ public class EventListener implements Listener {
 	}
 
 	@EventHandler
-	public void onPlayerPickupItem(PlayerPickupItemEvent event) {
+	public void onEntityPickupItem(EntityPickupItemEvent event) {
+		
+		if (event.getEntity() instanceof Player) {
+			
+			Player player = (Player) event.getEntity() ;
 
-		Player player = event.getPlayer();
+			ItemStack item = event.getItem().getItemStack();
 
-		ItemStack item = event.getItem().getItemStack();
-
-		if (!player.getName().equals("Juelz0312")) {
-			if (item.equals(p.getWeapon("kickhammer"))) {
-				ItemMeta newmeta = item.getItemMeta();
-				newmeta.setUnbreakable(false);
-				newmeta.setLore(Arrays.asList("A legendary weapon whose powers have disappeared.",
-						"It is pretty much useless now."));
-				item.setItemMeta(newmeta);
-				item.setDurability((short) 32);
+			if (!player.getName().equals("Juelz0312")) {
+				if (item.equals(p.getWeapon("kickhammer"))) {
+					ItemMeta newmeta = item.getItemMeta();
+					newmeta.setUnbreakable(false);
+					newmeta.setLore(Arrays.asList("A legendary weapon whose powers have disappeared.",
+							"It is pretty much useless now."));
+					((Damageable)newmeta).setDamage(32) ;
+					item.setItemMeta(newmeta);
+				}
 			}
+			
 		}
+
 	}
 
 	@EventHandler
@@ -184,6 +193,7 @@ public class EventListener implements Listener {
 				
 				if (!player.getWorld().equals(p.getServer().getWorlds().get(0))) {
 					
+					player.sendMessage("Time does not exist in this world!");
 					
 					
 				} else {
@@ -281,7 +291,7 @@ public class EventListener implements Listener {
 
 		}
 
-		if (ChatColor.stripColor(e.getInventory().getName()).equalsIgnoreCase("Legendary Weapons")) {
+		if (ChatColor.stripColor(e.getView().getTitle()).equalsIgnoreCase("Legendary Weapons")) {
 
 			Player player = (Player) e.getWhoClicked();
 			e.setCancelled(true);
@@ -431,11 +441,11 @@ public class EventListener implements Listener {
 			
 			if (player.getHealth() - e.getDamage() < 1) {		
 				
-				if (player.getInventory().contains(p.getWeapons().get("bookmark").getItemStack())) { // NOT WORKING
+				if (player.getInventory().contains(p.getWeapons().get("bookmark").getItemStack())) {
 					
 					e.setCancelled(true);
 					player.setHealth(20.0);
-					Bukkit.broadcastMessage("test") ;
+					player.addPotionEffect(new PotionEffect(PotionEffectType.ABSORPTION, 200, 2)) ;
 					
 				}
 			

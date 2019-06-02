@@ -19,6 +19,7 @@ import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
@@ -49,12 +50,17 @@ public class JulianPlugin extends JavaPlugin {
 
 	public void onEnable() {
 		Bukkit.getPluginManager().registerEvents(new EventListener(this), this);
+		
+		CustomWeapon wings = new CustomWeapon(ChatColor.GOLD + "Wings of Rebellion", Arrays.asList(""), Material.ELYTRA, true) ;
+		wings.addEnchantment(Enchantment.PROTECTION_ENVIRONMENTAL, 10, true) ;
+		
 		weaponslist.put("kickhammer", new CustomWeapon(ChatColor.GOLD + "The Kickhammer", Arrays.asList("A legendary weapon made for gods.", "Will instantly smite down anyone it hits."), Material.GOLDEN_AXE, true));
-		weaponslist.put("world", new CustomWeapon(ChatColor.GOLD + "The World", Arrays.asList("Gives you the ability to stop time for five seconds."), Material.CLOCK, true));
+		weaponslist.put("world", new CustomWeapon(ChatColor.GOLD + "Ragtime", Arrays.asList("Gives you the ability to stop time for five seconds."), Material.CLOCK, true));
 		weaponslist.put("sworld", new CustomWeapon(ChatColor.GOLD + "Star Platinum: The World", Arrays.asList("Stop time for one second."), Material.CLOCK, true));
 		weaponslist.put("yato", new CustomWeapon(ChatColor.GOLD + "Omega Yato", Arrays.asList(""), Material.GOLDEN_SWORD, false)) ;
 		weaponslist.put("bookmark", new CustomWeapon(ChatColor.GOLD + "Double Bookmark", Arrays.asList("A double-layered bookmark that Justine uses."), Material.INK_SAC,false)) ;
-		getServer().getLogger().info("Julian's Custom Plugin v0.2.4 has been loaded. Hello!");
+		weaponslist.put("wings", wings) ;
+		getServer().getLogger().info("Julian's Custom Plugin v0.2.8 has been loaded. Hello!");
 	}
 
 	public void onDisable() {
@@ -304,14 +310,15 @@ public class JulianPlugin extends JavaPlugin {
 	}
 
 	public void testForSleepPercent() {
+		
+		World world = (World) getServer().getWorlds().get(0);
 
-		float percent = (float) this.playersSleeping.size() / getServer().getOnlinePlayers().size() * 100.0F;
+		float percent = (float) this.playersSleeping.size() / world.getPlayers().size() * 100.0F;
 
 		if (percent >= 33.3) {
 
 			Bukkit.broadcastMessage("A portion of the server has went to bed. See you in the morning!");
-
-			World world = (World) getServer().getWorlds().get(0);
+			
 			world.setTime(world.getTime() + (23999 - world.getTime() % 23999));
 
 			if (world.hasStorm() || world.isThundering()) {
@@ -420,9 +427,9 @@ public class JulianPlugin extends JavaPlugin {
 
 		Bukkit.broadcastMessage(p.getName() + " has stopped time at " + t);
 
-		JulianPlugin plugin = this;
+		//JulianPlugin plugin = this;
 
-		//plugin.getServer().getScheduler().cancelAllTasks();
+		this.getServer().getScheduler().cancelTasks(this);
 
 		this.getServer().getScheduler().runTaskLater(this, new Runnable() {
 
@@ -431,6 +438,8 @@ public class JulianPlugin extends JavaPlugin {
 				stopper = p;
 				stopper.setVelocity(velocities.get(stopper.getUniqueId()));
 				countdown(world);
+				int inv = 60 + count ;
+				stopper.setNoDamageTicks(inv);
 
 			}
 

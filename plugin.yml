@@ -1,6 +1,7 @@
 name: JulianPlugin
 version: 0.2.8
 author: Julian Lee
+api-version: 1.13
 main: me.lazward.julianplugin.JulianPlugin
 commands:
    chatas:

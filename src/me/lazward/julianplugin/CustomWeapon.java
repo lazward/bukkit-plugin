@@ -8,6 +8,7 @@ import org.bukkit.enchantments.Enchantment;
 public class CustomWeapon {
 	
 	private ItemStack itemstack ;
+	private ItemMeta im ;
 	private String name = "" ;
 	private List<String> lore ;
 	
@@ -16,7 +17,7 @@ public class CustomWeapon {
 		name = n ;
 		lore = l ;
 		itemstack = new ItemStack(m, 1) ;
-		ItemMeta im = itemstack.getItemMeta() ;
+		im = itemstack.getItemMeta() ;
 		im.setLore(lore);
 		im.setDisplayName(name);
 		im.setUnbreakable(u);
@@ -44,13 +45,15 @@ public class CustomWeapon {
 	
 	public void setUnbreakable() {
 		
-		itemstack.getItemMeta().setUnbreakable(true);
+		im.setUnbreakable(true);
+		itemstack.setItemMeta(im) ;		
 		
 	}
 	
 	public void addEnchantment(Enchantment e,int level, boolean b) {
 		
-		itemstack.getItemMeta().addEnchant(e, level, b) ;
+		im.addEnchant(e, level, b) ;
+		itemstack.setItemMeta(im) ;
 		
 	}
 
