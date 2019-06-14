@@ -60,7 +60,7 @@ public class JulianPlugin extends JavaPlugin {
 		weaponslist.put("yato", new CustomWeapon(ChatColor.GOLD + "Omega Yato", Arrays.asList(""), Material.GOLDEN_SWORD, false)) ;
 		weaponslist.put("bookmark", new CustomWeapon(ChatColor.GOLD + "Double Bookmark", Arrays.asList("A double-layered bookmark that Justine uses."), Material.INK_SAC,false)) ;
 		weaponslist.put("wings", wings) ;
-		getServer().getLogger().info("Julian's Custom Plugin v0.2.8 has been loaded. Hello!");
+		getServer().getLogger().info("Julian's Custom Plugin v0.2.9 has been loaded. Hello!");
 	}
 
 	public void onDisable() {
@@ -555,6 +555,37 @@ public class JulianPlugin extends JavaPlugin {
 	public long getFTime() {
 		
 		return t ;
+		
+	}
+	
+	public void launch(Player p) {
+		
+		if (p.isSneaking()) {
+			
+			p.setSneaking(false) ;
+			
+		}
+		
+		p.teleport(p.getLocation().add(0, 1, 0)) ;
+		
+		Vector v = p.getLocation().getDirection() ;
+		
+		v.multiply(2) ;
+		
+		p.setVelocity(v);
+		
+		this.getServer().getScheduler().runTaskLater(this, new Runnable() {
+
+			public void run() {
+
+				p.setGliding(true);
+
+			}
+
+		}, 10L);
+		
+
+		
 		
 	}
 

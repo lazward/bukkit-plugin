@@ -351,6 +351,23 @@ public class EventListener implements Listener {
 			e.setCancelled(true);
 
 		}
+		
+		if (e.getPlayer().getInventory().getChestplate().getType() == Material.ELYTRA) {
+				
+				p.getServer().getScheduler().runTaskLater(p, new Runnable() {
+					
+					public void run() {
+						
+						if (e.getPlayer().isSneaking() && e.getPlayer().getInventory().getChestplate().getType() == Material.ELYTRA && e.getPlayer().getLocation().getPitch() <= -30)
+						
+						p.launch(e.getPlayer());
+						
+					}
+					
+				}, 30L) ;
+
+			
+		}
 
 	}
 
@@ -487,13 +504,6 @@ public class EventListener implements Listener {
 			
 		}
 		
-	}
-
-	@EventHandler
-	public void log(String x) {
-
-		Bukkit.getConsoleSender().sendMessage(x);
-
 	}
 
 }
