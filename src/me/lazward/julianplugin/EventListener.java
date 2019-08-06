@@ -5,10 +5,15 @@ import java.util.UUID;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.Effect;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
+import org.bukkit.block.Block;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Wolf;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
@@ -22,6 +27,7 @@ import org.bukkit.event.entity.EntityPickupItemEvent;
 import org.bukkit.event.entity.EntityTargetEvent;
 import org.bukkit.event.entity.EntityTargetLivingEntityEvent;
 import org.bukkit.event.entity.EntityTeleportEvent;
+import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.entity.ProjectileLaunchEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryOpenEvent;
@@ -43,7 +49,6 @@ import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.util.Vector;
 
-
 public class EventListener implements Listener {
 
 	JulianPlugin p;
@@ -56,16 +61,16 @@ public class EventListener implements Listener {
 
 	@EventHandler
 	public void onBedEnter(PlayerBedEnterEvent event) {
-		
-			if (event.getBedEnterResult() == PlayerBedEnterEvent.BedEnterResult.OK) {
-				
-				p.playersSleeping.add(event.getPlayer().getUniqueId());
 
-				Bukkit.broadcastMessage(event.getPlayer().getDisplayName() + " has went to bed.");
+		if (event.getBedEnterResult() == PlayerBedEnterEvent.BedEnterResult.OK) {
 
-				p.testForSleepPercent();
-				
-			}
+			p.playersSleeping.add(event.getPlayer().getUniqueId());
+
+			Bukkit.broadcastMessage(event.getPlayer().getDisplayName() + " has went to bed.");
+
+			p.testForSleepPercent();
+
+		}
 
 	}
 
@@ -74,12 +79,12 @@ public class EventListener implements Listener {
 		if (p.playersSleeping.contains(uuid)) {
 
 			p.playersSleeping.remove(uuid);
-			//long time = ((World) p.getServer().getWorlds().get(0)).getTime();
-			//if (time >= 12541 && time <= 23458) {
+			// long time = ((World) p.getServer().getWorlds().get(0)).getTime();
+			// if (time >= 12541 && time <= 23458) {
 
-				Bukkit.broadcastMessage(Bukkit.getPlayer(uuid).getDisplayName() + " has gotten out of bed.");
+			Bukkit.broadcastMessage(Bukkit.getPlayer(uuid).getDisplayName() + " has gotten out of bed.");
 
-			//}
+			// }
 
 		}
 
@@ -158,10 +163,10 @@ public class EventListener implements Listener {
 
 	@EventHandler
 	public void onEntityPickupItem(EntityPickupItemEvent event) {
-		
+
 		if (event.getEntity() instanceof Player) {
-			
-			Player player = (Player) event.getEntity() ;
+
+			Player player = (Player) event.getEntity();
 
 			ItemStack item = event.getItem().getItemStack();
 
@@ -171,11 +176,11 @@ public class EventListener implements Listener {
 					newmeta.setUnbreakable(false);
 					newmeta.setLore(Arrays.asList("A legendary weapon whose powers have disappeared.",
 							"It is pretty much useless now."));
-					((Damageable)newmeta).setDamage(32) ;
+					((Damageable) newmeta).setDamage(32);
 					item.setItemMeta(newmeta);
 				}
 			}
-			
+
 		}
 
 	}
@@ -183,21 +188,26 @@ public class EventListener implements Listener {
 	@EventHandler
 	public void onPlayerInteractEvent(PlayerInteractEvent event) {
 
-		if (event.getAction() == Action.RIGHT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_BLOCK) {
+		if (p.isTimeStopped() && !event.getPlayer().equals(p.getStopper())) {
 
-			Player player = event.getPlayer();
-			ItemStack inHand = player.getInventory().getItemInMainHand();
+			event.setCancelled(true);
+
+		}
+
+		Player player = event.getPlayer();
+		ItemStack inHand = player.getInventory().getItemInMainHand();
+
+		if (event.getAction() == Action.RIGHT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_BLOCK) {
 
 			if ((inHand.equals(p.getWeapons().get("world").getItemStack())
 					|| inHand.equals(p.getWeapons().get("sworld").getItemStack())) && !p.isTimeStopped()) {
-				
+
 				if (!player.getWorld().equals(p.getServer().getWorlds().get(0))) {
-					
+
 					player.sendMessage("Time does not exist in this world!");
-					
-					
+
 				} else {
-					
+
 					if (p.isTimeStopped()) {
 
 						p.resumeTime(p.getServer().getWorlds().get(0), p.getFTime());
@@ -206,28 +216,103 @@ public class EventListener implements Listener {
 
 						p.stopTime(player, inHand);
 
-					}	
-					
+					}
+
 				}
 
-			} else if (inHand.getType() == Material.AIR && player.getDisplayName().equals("Juelz0312")) {
-				
-				/*
-				
-				if (p.getHakai() == true) {
+			} else if (inHand.equals(p.getWeapons().get("testw").getItemStack())) {
 
-					player.sendMessage("You ready your fist.");
-					p.setHakai(true);
+				if (p.cooldowns.containsKey(player.getUniqueId())) {
+
+					long timeLeft = ((p.cooldowns.get(player.getUniqueId()) / 1000) + 5)
+							- (System.currentTimeMillis() / 1000);
+
+					if (timeLeft > 0) {
+
+						player.sendMessage("Cooldown: " + timeLeft + " secs");
+
+					}
 
 				} else {
 
-					player.sendMessage("You lower your fist.");
-					p.setHakai(false);
+					if (!p.activeAbility.contains(player.getUniqueId())) {
+
+						p.activeAbility.add(player.getUniqueId());
+
+						player.sendMessage("Ready");
+
+						p.getServer().getScheduler().runTaskLater(p, new Runnable() {
+
+							public void run() {
+
+								if (!p.cooldowns.containsKey(player.getUniqueId())) {
+
+									p.activeAbility.remove(player.getUniqueId());
+
+									player.sendMessage("Cancelled");
+
+								}
+
+							}
+
+						}, 80L);
+
+					}
 
 				}
-				
-				*/
-				
+
+			}
+
+		} else if (event.getAction() == Action.LEFT_CLICK_AIR || event.getAction() == Action.LEFT_CLICK_BLOCK) {
+
+			if (inHand.equals(p.getWeapons().get("testw").getItemStack())) {
+
+				if (p.activeAbility.contains(player.getUniqueId())) {
+
+					Block[] bs = player.getLineOfSight(null, 10).toArray(new Block[0]);
+
+					for (Block b : bs) {
+
+						for (Entity e : player.getNearbyEntities(10, 10, 10)) {
+
+							if (e.getLocation().distance(b.getLocation()) < 2) {
+
+								if (e instanceof LivingEntity) {
+
+									e.getWorld().playEffect(e.getLocation(), Effect.ENDER_SIGNAL, 0);
+									e.getWorld().playEffect(e.getLocation(), Effect.WITHER_SHOOT, 0);
+									((LivingEntity) e).damage(10);
+									Vector v = e.getLocation().toVector().subtract(player.getLocation().toVector())
+											.normalize();
+									e.setVelocity(v);
+
+								}
+
+							}
+
+						}
+
+					}
+
+					player.sendMessage("Activated");
+
+					p.cooldowns.put(player.getUniqueId(), System.currentTimeMillis());
+
+					p.activeAbility.remove(player.getUniqueId());
+
+					p.getServer().getScheduler().runTaskLater(p, new Runnable() {
+
+						public void run() {
+
+							p.cooldowns.remove(player.getUniqueId());
+							player.sendMessage("Cooldown finished");
+
+						}
+
+					}, 100L);
+
+				}
+
 			}
 
 		}
@@ -235,7 +320,7 @@ public class EventListener implements Listener {
 	}
 
 	@EventHandler
-	public void onPlayerMove(PlayerMoveEvent e) {
+	public void onPlayerMoveEvent(PlayerMoveEvent e) {
 
 		if (p.isTimeStopped() && !e.getPlayer().equals(p.getStopper())) { // && !e.getPlayer().equals(stopper)
 
@@ -244,6 +329,10 @@ public class EventListener implements Listener {
 			location.setPitch(e.getTo().getPitch());
 			location.setYaw(e.getTo().getYaw());
 			e.getPlayer().teleport(location);
+
+		} else if (p.fly.contains(e.getPlayer().getUniqueId()) && (e.getTo().getY() > e.getFrom().getY())) {
+
+			p.launch(e.getPlayer());
 
 		}
 
@@ -351,22 +440,33 @@ public class EventListener implements Listener {
 			e.setCancelled(true);
 
 		}
-		
-		if (e.getPlayer().getInventory().getChestplate().getType() == Material.ELYTRA) {
-				
-				p.getServer().getScheduler().runTaskLater(p, new Runnable() {
-					
-					public void run() {
-						
-						if (e.getPlayer().isSneaking() && e.getPlayer().getInventory().getChestplate().getType() == Material.ELYTRA && e.getPlayer().getLocation().getPitch() <= -30)
-						
-						p.launch(e.getPlayer());
-						
-					}
-					
-				}, 30L) ;
 
-			
+		if (e.getPlayer().getInventory().getChestplate().getType() == Material.ELYTRA) {
+
+			if (e.isSneaking() && e.getPlayer().isOnGround()) {
+
+				p.getServer().getScheduler().runTaskLater(p, new Runnable() {
+
+					public void run() {
+
+						if (e.isSneaking() && e.getPlayer().getInventory().getChestplate().getType() == Material.ELYTRA
+								&& e.getPlayer().getLocation().getPitch() <= -30 && e.getPlayer().isOnGround())
+
+							p.fly.add(e.getPlayer().getUniqueId());
+						e.getPlayer().sendMessage("Ready to fly");
+
+					}
+
+				}, 30L);
+
+			} else if (p.fly.contains(e.getPlayer().getUniqueId())
+					&& (!e.isSneaking() || !e.getPlayer().isOnGround())) {
+
+				p.fly.remove(e.getPlayer().getUniqueId());
+				e.getPlayer().sendMessage("Cancelled");
+
+			}
+
 		}
 
 	}
@@ -451,58 +551,65 @@ public class EventListener implements Listener {
 			e.setCancelled(true);
 
 		}
-		
+
 		if (e.getEntity() instanceof Player) {
-			
-			Player player = (Player)e.getEntity() ;
-			
-			if (player.getHealth() - e.getDamage() < 1) {		
-				
+
+			Player player = (Player) e.getEntity();
+
+			if (player.getHealth() - e.getDamage() < 1) {
+
 				if (player.getInventory().contains(p.getWeapons().get("bookmark").getItemStack())) {
-					
+
 					e.setCancelled(true);
 					player.setHealth(20.0);
-					player.addPotionEffect(new PotionEffect(PotionEffectType.ABSORPTION, 200, 2)) ;
-					
+					player.addPotionEffect(new PotionEffect(PotionEffectType.ABSORPTION, 200, 2));
+
 				}
-			
+
 			}
-			
+
+		}
+
+	}
+
+	@EventHandler
+	public void onPlayerItemBreakEvent(PlayerItemBreakEvent e) {
+
+		ItemStack b = e.getBrokenItem();
+
+		if (b.getItemMeta().getDisplayName().equals(p.getWeapon("yato").getItemMeta().getDisplayName())) {
+
+			Player player = e.getPlayer();
+			player.sendMessage("The Omega Yato has run out of energy.");
+
+			Bukkit.getServer().getScheduler().scheduleSyncDelayedTask(p, new Runnable() {
+
+				public void run() {
+
+					if (player.getInventory().firstEmpty() == -1) {
+
+						player.sendMessage("You don't have enough space for the Omega Yato.");
+
+					} else {
+
+						player.sendMessage("The Omega Yato has been restored.");
+						player.getInventory().addItem(p.getWeapon("yato"));
+
+					}
+
+				}
+
+			}, 300);
+
 		}
 
 	}
 	
 	@EventHandler
-	public void onPlayerItemBreakEvent(PlayerItemBreakEvent e) {
+	public void onPlayerDeathEvent(PlayerDeathEvent e) {
 		
-		ItemStack b = e.getBrokenItem() ;
-		
-		if (b.getItemMeta().getDisplayName().equals(p.getWeapon("yato").getItemMeta().getDisplayName())) {
-			
-			Player player = e.getPlayer() ;
-			player.sendMessage("The Omega Yato has run out of energy.") ;
-			
-			Bukkit.getServer().getScheduler().scheduleSyncDelayedTask(p, new Runnable() {
-				
-				public void run() {
-					
-					if (player.getInventory().firstEmpty() == -1) {
-						
-						player.sendMessage("You don't have enough space for the Omega Yato.");
-						
-					} else {
-						
-						player.sendMessage("The Omega Yato has been restored.");
-						player.getInventory().addItem(p.getWeapon("yato")) ;
-						
-					}
-					
-				}
-				
-				
-			}, 300) ;
-			
-		}
+		Player p = e.getEntity() ;
+		Bukkit.broadcastMessage(p.getDisplayName() + "has died at " + (int)p.getLocation().getX() + " " + (int)p.getLocation().getY() + " " + (int)p.getLocation().getZ()) ;
 		
 	}
 

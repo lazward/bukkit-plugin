@@ -21,6 +21,8 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Horse;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Wolf;
@@ -47,6 +49,12 @@ public class JulianPlugin extends JavaPlugin {
 	HashMap<UUID, Vector> velocities = new HashMap<UUID, Vector>();
 	
 	Long t ;
+	
+	HashMap<UUID, Long> cooldowns = new HashMap<UUID, Long>() ;
+	
+	ArrayList<UUID> activeAbility = new ArrayList<UUID>() ;
+	
+	ArrayList<UUID> fly = new ArrayList<UUID>() ;
 
 	public void onEnable() {
 		Bukkit.getPluginManager().registerEvents(new EventListener(this), this);
@@ -60,7 +68,8 @@ public class JulianPlugin extends JavaPlugin {
 		weaponslist.put("yato", new CustomWeapon(ChatColor.GOLD + "Omega Yato", Arrays.asList(""), Material.GOLDEN_SWORD, false)) ;
 		weaponslist.put("bookmark", new CustomWeapon(ChatColor.GOLD + "Double Bookmark", Arrays.asList("A double-layered bookmark that Justine uses."), Material.INK_SAC,false)) ;
 		weaponslist.put("wings", wings) ;
-		getServer().getLogger().info("Julian's Custom Plugin v0.2.9 has been loaded. Hello!");
+		weaponslist.put("testw", new CustomWeapon("Test", Arrays.asList(""), Material.DIAMOND_SWORD, true)) ;
+		getServer().getLogger().info("Julian's Custom Plugin v0.3.1 has been loaded. Hello!");
 	}
 
 	public void onDisable() {
@@ -212,52 +221,81 @@ public class JulianPlugin extends JavaPlugin {
 			if ((sender instanceof Player)) {
 			Player s = (Player) sender ;
 			
-			Block[] bs = s.getLineOfSight(null, 10).toArray(new Block[0]);
+			Wolf search = (Wolf)findClosestEntity(s, EntityType.WOLF) ;
 			
-			boolean found = false ;
-			
-			for (Block b : bs) {
+			if (search != null) {
 				
-				for (Entity e : s.getNearbyEntities(10, 10, 10)) {
-				
-					if (e.getLocation().distance(b.getLocation()) < 2) {
+				if (search.isTamed()) {
 					
-						if (e instanceof Wolf) {
-						
-							if (((Wolf) e).isTamed()) {
-							
-								sender.sendMessage("Owner: " + ((Wolf) e).getOwner().getName());
-								found = true ;
-							
-							} else {
-							
-								sender.sendMessage("This wolf is not tamed!") ;
-								found = true ;
-							}
-						
-							break ;
-						
-						}
+					s.sendMessage("Owner: " + search.getOwner());
 					
-					}
-				
+				} else {
+					
+					s.sendMessage("This wolf has no owner!");
 				}
 				
-				if (found) {
-					
-					break ;
-					
-				}
-			
-			}
-			
-			if (!found) {
-			
-				sender.sendMessage("Wolf not found!") ;
-			
+			} else {
+				
+				s.sendMessage("Wolf not found!");
+				
 			}
 			
 			return true ;
+							
+			} else {
+				
+				sender.sendMessage("Only players can use this command!") ;
+				return true ;
+				
+			}
+			
+		} else if (command.getName().equalsIgnoreCase("horse")) {
+			
+			if ((sender instanceof Player)) {
+				
+				Player s = (Player) sender ;
+				
+				if (((Player) sender).isInsideVehicle()) {
+					
+					if (s.getVehicle() instanceof Horse) {
+						
+						if (((Horse) s.getVehicle()).isTamed()) {
+
+							sender.sendMessage("Owner: " + ((Horse) s.getVehicle()).getOwner().getName());
+						
+						} else {
+						
+							sender.sendMessage("This horse is not tamed!") ;
+						}
+						
+					}
+					
+				} else {
+					
+					
+					Horse search = (Horse)findClosestEntity(s, EntityType.HORSE) ;
+					
+					if (search != null) {
+						
+						if (search.isTamed()) {
+							
+							s.sendMessage("Owner: " + search.getOwner());
+							
+						} else {
+							
+							s.sendMessage("This horse has no owner!");
+						}
+						
+					} else {
+						
+						s.sendMessage("Horse not found!");
+						
+					}
+					
+					return true ;
+					
+				}
+
 							
 			} else {
 				
@@ -270,7 +308,7 @@ public class JulianPlugin extends JavaPlugin {
 
 		return true;
 
-	}
+	} 
 	
 	public boolean isTimeStopped() {
 		
@@ -560,6 +598,8 @@ public class JulianPlugin extends JavaPlugin {
 	
 	public void launch(Player p) {
 		
+		fly.remove(p.getUniqueId()) ;
+		
 		if (p.isSneaking()) {
 			
 			p.setSneaking(false) ;
@@ -584,7 +624,32 @@ public class JulianPlugin extends JavaPlugin {
 
 		}, 10L);
 		
+	}
+	
+	public Entity findClosestEntity(Player p, EntityType e) {
+		
+		Block[] bs = p.getLineOfSight(null, 10).toArray(new Block[0]);
+		
+		for (Block b : bs) {
+			
+			for (Entity t : p.getNearbyEntities(10, 10, 10)) {
+			
+				if (t.getLocation().distance(b.getLocation()) < 2) {
+				
+					if (t.getType() == e) {
+						
+						return t ;
 
+					
+					}
+				
+				}
+			
+			}
+		
+		}
+		
+		return null ;
 		
 		
 	}
